@@ -21,9 +21,9 @@ Regras:
 
 ## Handoff
 
-* In-flight feature: Nenhuma
-* Fase atual: Nao iniciada
-* Proximo passo sugerido: Nenhum
-* Bloqueios: Nenhum
-* Decisoes pendentes de humano: Nenhuma
+* In-flight feature: technical-doc (batch mvp-batch-005-techdoc)
+* Fase atual: 16 concluida (AB-19, AB-20, AB-21 done)
+* Proximo passo sugerido: AB-22 (Fase 17) — aguardando decisao humana sobre provider LLM, dependencia e chaves API
+* Bloqueios: AB-22 parada obrigatoria (servico externo/dependencia nova)
+* Decisoes pendentes de humano: Provider LLM (OpenAI/Anthropic/local), dependencia npm, gestao de chaves, backend proxy vs client-side
 * Ultima atualizacao: 2026-06-28
