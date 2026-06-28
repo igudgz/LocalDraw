@@ -7,6 +7,7 @@ type TextElementProps = {
 export function TextElement({ element }: TextElementProps) {
   return (
     <text
+      data-element-id={element.id}
       x={element.x}
       y={element.y}
       fill={element.strokeColor}

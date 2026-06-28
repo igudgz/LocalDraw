@@ -43,8 +43,10 @@ export type CurrentDrawingState = {
   updatedAt: string;
 };
 
+export type EditorInteraction = "idle" | "dragging";
+
 export type EditorUiState = {
-  interaction: "idle";
+  interaction: EditorInteraction;
 };
 
 export type EditorState = {

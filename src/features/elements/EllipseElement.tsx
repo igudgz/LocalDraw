@@ -7,6 +7,7 @@ type EllipseElementProps = {
 export function EllipseElement({ element }: EllipseElementProps) {
   return (
     <ellipse
+      data-element-id={element.id}
       cx={element.x + element.width / 2}
       cy={element.y + element.height / 2}
       rx={element.width / 2}
