@@ -1,8 +1,14 @@
 import { useMemo, useState } from "react";
 import { useEditorElements } from "../editor/EditorContext";
 import { parseDiagram } from "./diagramParser";
-import { generateMarkdown } from "./markdownGenerator";
+import { buildTechnicalDocInput } from "./technicalDocContext";
+import { generateTechnicalDocLocal } from "./technicalDocService";
 import type { ParsedDiagram } from "./technicalDocTypes";
+
+const DEFAULT_DOC_OPTIONS = {
+  outputLanguage: "pt-BR",
+  docStyle: "detailed",
+} as const;
 
 type PreviewTab = "json" | "markdown";
 
@@ -16,10 +22,14 @@ export function TechnicalDocPanel() {
     "idle",
   );
 
-  const markdown = useMemo(
-    () => (parsedDiagram ? generateMarkdown(parsedDiagram) : ""),
-    [parsedDiagram],
-  );
+  const markdown = useMemo(() => {
+    if (!parsedDiagram) {
+      return "";
+    }
+
+    const input = buildTechnicalDocInput(parsedDiagram, DEFAULT_DOC_OPTIONS);
+    return generateTechnicalDocLocal(input).markdown;
+  }, [parsedDiagram]);
 
   const handleAnalyze = () => {
     setParsedDiagram(parseDiagram(elements));

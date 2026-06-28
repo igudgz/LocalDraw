@@ -34,3 +34,26 @@ export type ParsedDiagram = {
   assumptions: string[];
   openQuestions: string[];
 };
+
+export type TechnicalDocOutputLanguage = "pt-BR" | "en-US";
+
+export type TechnicalDocStyle = "concise" | "detailed";
+
+export type TechnicalDocOptions = {
+  userContext?: string;
+  outputLanguage: TechnicalDocOutputLanguage;
+  docStyle: TechnicalDocStyle;
+};
+
+export type TechnicalDocInput = {
+  diagram: ParsedDiagram;
+  userContext?: string;
+  outputLanguage: TechnicalDocOutputLanguage;
+  docStyle: TechnicalDocStyle;
+};
+
+export type TechnicalDocOutput = {
+  markdown: string;
+  assumptions: string[];
+  openQuestions: string[];
+};
