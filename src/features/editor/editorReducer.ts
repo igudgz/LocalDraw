@@ -102,6 +102,17 @@ export function editorReducer(
           updatedAt: action.drawing.metadata.updatedAt,
         },
       };
+    case "update-current-drawing":
+      return {
+        ...state,
+        currentDrawing: {
+          ...state.currentDrawing,
+          ...(action.name !== undefined ? { name: action.name } : {}),
+          ...(action.updatedAt !== undefined
+            ? { updatedAt: action.updatedAt }
+            : {}),
+        },
+      };
     default: {
       const _exhaustive: never = action;
       return state;

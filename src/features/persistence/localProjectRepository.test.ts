@@ -4,11 +4,14 @@ import type { DrawingDbRecord } from "../../shared/storage/indexedDb";
 import { initialEditorState } from "../editor/editorReducer";
 import type { LocalDrawElement } from "../elements/elementTypes";
 import {
+  createDrawing,
   deleteDrawing,
+  duplicateDrawing,
   getById,
   listSummaries,
   loadActiveDrawing,
   save,
+  updateMetadata,
 } from "./localProjectRepository";
 
 const ACTIVE_DRAWING_STORAGE_KEY = "localdraw:activeDrawingId";
@@ -147,5 +150,45 @@ describe("localProjectRepository", () => {
       scrollY: 8,
     });
     expect(loaded?.viewport).not.toHaveProperty("showGrid");
+  });
+
+  it("creates an empty drawing with a new id (REQ-002)", async () => {
+    const created = await createDrawing("Fresh drawing");
+
+    expect(created.name).toBe("Fresh drawing");
+    expect(created.elements).toEqual([]);
+    expect(created.tags).toEqual([]);
+    expect(await getById(created.id)).toEqual(created);
+    expect(localStorage.getItem(ACTIVE_DRAWING_STORAGE_KEY)).toBe(created.id);
+  });
+
+  it("duplicates a drawing with a copy suffix (REQ-004)", async () => {
+    await save(sampleRecord);
+
+    const duplicate = await duplicateDrawing(sampleRecord.id);
+
+    expect(duplicate).not.toBeNull();
+    expect(duplicate?.id).not.toBe(sampleRecord.id);
+    expect(duplicate?.name).toBe(`${sampleRecord.name} (copy)`);
+    expect(duplicate?.elements).toEqual(sampleRecord.elements);
+    expect(duplicate?.tags).toEqual(sampleRecord.tags);
+  });
+
+  it("updates metadata without replacing elements (REQ-006)", async () => {
+    await save(sampleRecord);
+
+    const updated = await updateMetadata(sampleRecord.id, {
+      name: "Renamed drawing",
+      description: "Updated description",
+      tags: ["updated"],
+    });
+
+    expect(updated).toMatchObject({
+      id: sampleRecord.id,
+      name: "Renamed drawing",
+      description: "Updated description",
+      tags: ["updated"],
+      elements: sampleRecord.elements,
+    });
   });
 });

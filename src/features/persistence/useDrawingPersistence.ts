@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Dispatch } from "react";
 import type { EditorAction } from "../editor/editorActions";
 import type { EditorState } from "../editor/editorTypes";
@@ -35,11 +35,30 @@ export function createDebouncedCallback(
   };
 }
 
+type UseDrawingPersistenceOptions = {
+  onSaved?: () => void;
+};
+
 export function useDrawingPersistence(
   state: EditorState,
   dispatch: Dispatch<EditorAction>,
-): void {
+  options?: UseDrawingPersistenceOptions,
+): {
+  flushSave: () => Promise<void>;
+  hydrated: boolean;
+} {
+  const [hydrated, setHydrated] = useState(false);
   const hydratedRef = useRef(false);
+  const stateRef = useRef(state);
+  const onSavedRef = useRef(options?.onSaved);
+
+  stateRef.current = state;
+  onSavedRef.current = options?.onSaved;
+
+  const flushSave = useCallback(async () => {
+    await localProjectRepository.saveFromEditorState(stateRef.current);
+    onSavedRef.current?.();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,25 +66,28 @@ export function useDrawingPersistence(
     async function hydrateFromStorage() {
       try {
         const record = await localProjectRepository.loadActiveDrawing();
-        if (cancelled || !record) {
+        if (cancelled) {
           return;
         }
 
-        dispatch({
-          type: "restore-drawing",
-          drawing: {
-            id: record.id,
-            name: record.name,
-            elements: record.elements,
-            viewport: record.viewport,
-            metadata: record.metadata,
-          },
-        });
+        if (record) {
+          dispatch({
+            type: "restore-drawing",
+            drawing: {
+              id: record.id,
+              name: record.name,
+              elements: record.elements,
+              viewport: record.viewport,
+              metadata: record.metadata,
+            },
+          });
+        }
       } catch (error) {
         console.error("Failed to load drawing from IndexedDB", error);
       } finally {
         if (!cancelled) {
           hydratedRef.current = true;
+          setHydrated(true);
         }
       }
     }
@@ -83,7 +105,7 @@ export function useDrawingPersistence(
     }
 
     const debouncedSave = createDebouncedCallback(() => {
-      void localProjectRepository.saveFromEditorState(state).catch((error) => {
+      void flushSave().catch((error) => {
         console.error("Failed to autosave drawing", error);
       });
     }, AUTOSAVE_DEBOUNCE_MS);
@@ -93,5 +115,10 @@ export function useDrawingPersistence(
     return () => {
       debouncedSave.cancel();
     };
-  }, [state]);
+  }, [state, flushSave]);
+
+  return {
+    flushSave,
+    hydrated,
+  };
 }

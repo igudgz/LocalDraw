@@ -21,12 +21,16 @@ function readActiveDrawingId(): string | null {
   }
 }
 
-function writeActiveDrawingId(id: string): void {
+export function setActiveDrawingId(id: string): void {
   try {
     localStorage.setItem(ACTIVE_DRAWING_STORAGE_KEY, id);
   } catch {
     // Ignore storage failures; persistence still works for the current session.
   }
+}
+
+function writeActiveDrawingId(id: string): void {
+  setActiveDrawingId(id);
 }
 
 function clearActiveDrawingId(id: string): void {
@@ -98,6 +102,89 @@ export async function deleteDrawing(id: string): Promise<void> {
   clearActiveDrawingId(id);
 }
 
+export type DrawingMetadataUpdate = {
+  name?: string;
+  description?: string;
+  tags?: string[];
+};
+
+function createEmptyDrawingRecord(name: string): DrawingDbRecord {
+  const now = new Date().toISOString();
+
+  return {
+    id: crypto.randomUUID(),
+    name,
+    tags: [],
+    elements: [],
+    viewport: {
+      zoom: 1,
+      scrollX: 0,
+      scrollY: 0,
+    },
+    metadata: {
+      createdAt: now,
+      updatedAt: now,
+    },
+  };
+}
+
+export async function createDrawing(
+  name = "Untitled drawing",
+): Promise<DrawingDbRecord> {
+  const record = createEmptyDrawingRecord(name);
+  await save(record);
+  return record;
+}
+
+export async function duplicateDrawing(
+  id: string,
+): Promise<DrawingDbRecord | null> {
+  const source = await getById(id);
+  if (!source) {
+    return null;
+  }
+
+  const now = new Date().toISOString();
+  const record: DrawingDbRecord = {
+    ...structuredClone(source),
+    id: crypto.randomUUID(),
+    name: `${source.name} (copy)`,
+    metadata: {
+      createdAt: now,
+      updatedAt: now,
+    },
+  };
+
+  await save(record);
+  return record;
+}
+
+export async function updateMetadata(
+  id: string,
+  update: DrawingMetadataUpdate,
+): Promise<DrawingDbRecord | null> {
+  const existing = await getById(id);
+  if (!existing) {
+    return null;
+  }
+
+  const record: DrawingDbRecord = {
+    ...existing,
+    ...(update.name !== undefined ? { name: update.name } : {}),
+    ...(update.description !== undefined
+      ? { description: update.description }
+      : {}),
+    ...(update.tags !== undefined ? { tags: update.tags } : {}),
+    metadata: {
+      ...existing.metadata,
+      updatedAt: new Date().toISOString(),
+    },
+  };
+
+  await putDrawingRecord(record);
+  return record;
+}
+
 export async function loadActiveDrawing(): Promise<DrawingDbRecord | null> {
   const activeId = readActiveDrawingId();
   if (activeId) {
@@ -126,6 +213,10 @@ export type LocalProjectRepository = {
   listSummaries: typeof listSummaries;
   deleteDrawing: typeof deleteDrawing;
   loadActiveDrawing: typeof loadActiveDrawing;
+  createDrawing: typeof createDrawing;
+  duplicateDrawing: typeof duplicateDrawing;
+  updateMetadata: typeof updateMetadata;
+  setActiveDrawingId: typeof setActiveDrawingId;
 };
 
 export const localProjectRepository: LocalProjectRepository = {
@@ -135,4 +226,8 @@ export const localProjectRepository: LocalProjectRepository = {
   listSummaries,
   deleteDrawing,
   loadActiveDrawing,
+  createDrawing,
+  duplicateDrawing,
+  updateMetadata,
+  setActiveDrawingId,
 };

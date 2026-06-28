@@ -48,4 +48,9 @@ export type EditorAction =
           updatedAt: string;
         };
       };
+    }
+  | {
+      type: "update-current-drawing";
+      name?: string;
+      updatedAt?: string;
     };
