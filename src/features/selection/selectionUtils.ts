@@ -1,4 +1,5 @@
 import type { LocalDrawElement } from "../elements/elementTypes";
+import { getElementBounds } from "../elements/elementGeometry";
 
 export type SelectionId = string;
 
@@ -26,23 +27,15 @@ function isPointInElement(
   point: CanvasPoint,
   element: LocalDrawElement,
 ): boolean {
-  switch (element.type) {
-    case "rectangle":
-    case "ellipse":
-    case "text":
-    case "arrow":
-      return isPointInRect(
-        point,
-        element.x,
-        element.y,
-        element.width,
-        element.height,
-      );
-    default: {
-      const _exhaustive: never = element;
-      return false;
-    }
-  }
+  const bounds = getElementBounds(element);
+
+  return isPointInRect(
+    point,
+    bounds.x,
+    bounds.y,
+    bounds.width,
+    bounds.height,
+  );
 }
 
 export function hitTestElementAtPoint(

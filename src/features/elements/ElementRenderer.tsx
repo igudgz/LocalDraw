@@ -6,9 +6,13 @@ import type { LocalDrawElement } from "./elementTypes";
 
 type ElementRendererProps = {
   elements: LocalDrawElement[];
+  editingElementId?: string | null;
 };
 
-export function ElementRenderer({ elements }: ElementRendererProps) {
+export function ElementRenderer({
+  elements,
+  editingElementId = null,
+}: ElementRendererProps) {
   return (
     <>
       {elements.map((element) => {
@@ -20,7 +24,15 @@ export function ElementRenderer({ elements }: ElementRendererProps) {
           case "arrow":
             return <ArrowElement key={element.id} element={element} />;
           case "text":
+            if (element.id === editingElementId) {
+              return null;
+            }
+
             return <TextElement key={element.id} element={element} />;
+          default: {
+            const _exhaustive: never = element;
+            return _exhaustive;
+          }
         }
       })}
     </>
