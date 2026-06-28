@@ -22,12 +22,10 @@ Regras:
 
 ## Handoff
 
-* In-flight feature: persistence (AB-15)
-* Fase atual: Fase 10 — Persistencia local
-* Proximo passo sugerido: Implementation Agent AB-15
+* In-flight feature: Nenhuma (batch mvp-batch-004-persistence concluido)
+* Fase atual: Fase 12 concluida (import/export)
+* Proximo passo sugerido: Fase 13 atalhos de teclado ou proximo batch PM
 * Bloqueios: Nenhum
-* Decisoes pendentes de humano: Nenhuma
+* Decisoes pendentes de humano: Revisao final do batch; E2E manual opcional
 * Ultima atualizacao: 2026-06-28
-* Batch: mvp-batch-004-persistence (Onda 1, Trilha B)
-* Worktree: C:\Users\igor2\Documents\Playground\LocalDraw-persist
-* Branch: feat/mvp-batch-004-persistence
+* Batch concluido: mvp-batch-004-persistence (AB-15, AB-16, AB-17)
