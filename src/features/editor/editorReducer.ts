@@ -91,6 +91,7 @@ export function editorReducer(
         ...state,
         elements: action.drawing.elements,
         selectedElementIds: [],
+        activeTool: "select",
         viewport: {
           ...action.drawing.viewport,
           showGrid: state.viewport.showGrid,
@@ -100,6 +101,13 @@ export function editorReducer(
           name: action.drawing.name,
           createdAt: action.drawing.metadata.createdAt,
           updatedAt: action.drawing.metadata.updatedAt,
+        },
+        history: {
+          past: [],
+          future: [],
+        },
+        ui: {
+          interaction: "idle",
         },
       };
     case "update-current-drawing":

@@ -28,7 +28,7 @@ export function Editor({
       <EditorToolbar
         activeTool={state.activeTool}
         fileInputRef={importExport.fileInputRef}
-        importError={importExport.importError}
+        toolbarError={importExport.toolbarError}
         isExportingPng={importExport.isExportingPng}
         viewport={state.viewport}
         onExportLocalDraw={() => {

@@ -1,18 +1,20 @@
 import type { EditorState } from "../editor/editorTypes";
 import type { ProjectSummary } from "../projects/projectTypes";
 import {
-  deleteDrawingRecord,
-  getAllDrawingRecords,
-  getDrawingRecord,
-  putDrawingRecord,
-  type DrawingDbRecord,
+  deleteRecord,
+  getAllRecords,
+  getRecord,
+  putRecord,
 } from "../../shared/storage/indexedDb";
+import { editorStateToDrawingRecord } from "./drawingBridge";
 import { deserializeLocalDrawFile, serializeDrawingRecord } from "./localDrawSerializer";
 import type { LocalDrawFile } from "./localDrawSerializer";
+import type { DrawingDbRecord } from "./drawingTypes";
 
 export type { DrawingDbRecord };
 
 const ACTIVE_DRAWING_STORAGE_KEY = "localdraw:activeDrawingId";
+export const PLACEHOLDER_DRAWING_ID = "localdraw-initial-drawing";
 
 function readActiveDrawingId(): string | null {
   try {
@@ -28,10 +30,6 @@ export function setActiveDrawingId(id: string): void {
   } catch {
     // Ignore storage failures; persistence still works for the current session.
   }
-}
-
-function writeActiveDrawingId(id: string): void {
-  setActiveDrawingId(id);
 }
 
 function clearActiveDrawingId(id: string): void {
@@ -52,54 +50,34 @@ function toProjectSummary(record: DrawingDbRecord): ProjectSummary {
   };
 }
 
-function editorStateToDrawingRecord(
-  state: EditorState,
-  existing?: DrawingDbRecord | null,
-): DrawingDbRecord {
-  const updatedAt = new Date().toISOString();
-
-  return {
-    id: state.currentDrawing.id,
-    name: state.currentDrawing.name,
-    description: existing?.description,
-    tags: existing?.tags ?? [],
-    elements: structuredClone(state.elements),
-    viewport: {
-      zoom: state.viewport.zoom,
-      scrollX: state.viewport.scrollX,
-      scrollY: state.viewport.scrollY,
-    },
-    metadata: {
-      createdAt: state.currentDrawing.createdAt,
-      updatedAt,
-    },
-  };
-}
-
 export async function save(record: DrawingDbRecord): Promise<void> {
-  await putDrawingRecord(record);
-  writeActiveDrawingId(record.id);
+  await putRecord(record);
+  setActiveDrawingId(record.id);
 }
 
 export async function saveFromEditorState(state: EditorState): Promise<void> {
-  const existing = await getDrawingRecord(state.currentDrawing.id);
+  if (state.currentDrawing.id === PLACEHOLDER_DRAWING_ID) {
+    return;
+  }
+
+  const existing = await getById(state.currentDrawing.id);
   const record = editorStateToDrawingRecord(state, existing);
   await save(record);
 }
 
 export async function getById(id: string): Promise<DrawingDbRecord | null> {
-  return getDrawingRecord(id);
+  return getRecord<DrawingDbRecord>(id);
 }
 
 export async function listSummaries(): Promise<ProjectSummary[]> {
-  const records = await getAllDrawingRecords();
+  const records = await getAllRecords<DrawingDbRecord>();
   return records
     .map(toProjectSummary)
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
 export async function deleteDrawing(id: string): Promise<void> {
-  await deleteDrawingRecord(id);
+  await deleteRecord(id);
   clearActiveDrawingId(id);
 }
 
@@ -188,7 +166,7 @@ export async function updateMetadata(
     },
   };
 
-  await putDrawingRecord(record);
+  await putRecord(record);
   return record;
 }
 
@@ -212,31 +190,3 @@ export async function loadActiveDrawing(): Promise<DrawingDbRecord | null> {
 export function toLocalDrawFile(record: DrawingDbRecord) {
   return serializeDrawingRecord(record);
 }
-
-export type LocalProjectRepository = {
-  save: typeof save;
-  saveFromEditorState: typeof saveFromEditorState;
-  getById: typeof getById;
-  listSummaries: typeof listSummaries;
-  deleteDrawing: typeof deleteDrawing;
-  loadActiveDrawing: typeof loadActiveDrawing;
-  createDrawing: typeof createDrawing;
-  importDrawing: typeof importDrawing;
-  duplicateDrawing: typeof duplicateDrawing;
-  updateMetadata: typeof updateMetadata;
-  setActiveDrawingId: typeof setActiveDrawingId;
-};
-
-export const localProjectRepository: LocalProjectRepository = {
-  save,
-  saveFromEditorState,
-  getById,
-  listSummaries,
-  deleteDrawing,
-  loadActiveDrawing,
-  createDrawing,
-  importDrawing,
-  duplicateDrawing,
-  updateMetadata,
-  setActiveDrawingId,
-};

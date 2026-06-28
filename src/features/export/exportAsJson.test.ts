@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import type { DrawingDbRecord } from "../../shared/storage/indexedDb";
+import type { DrawingDbRecord } from "../persistence/drawingTypes";
 import type { LocalDrawElement } from "../elements/elementTypes";
-import {
-  drawingRecordFromEditorState,
-  exportAsLocalDraw,
-} from "./exportAsJson";
+import { editorStateToDrawingRecord, exportAsLocalDraw } from "./exportAsJson";
 import type { EditorState } from "../editor/editorTypes";
 import { initialEditorState } from "../editor/editorReducer";
 
@@ -60,7 +57,7 @@ describe("exportAsJson", () => {
       },
     };
 
-    const record = drawingRecordFromEditorState(state, {
+    const record = editorStateToDrawingRecord(state, {
       description: "Core services",
       tags: ["architecture"],
     });

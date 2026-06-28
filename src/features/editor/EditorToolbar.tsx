@@ -13,7 +13,7 @@ const tools: Array<{ id: EditorTool; label: string }> = [
 type EditorToolbarProps = {
   activeTool: EditorTool;
   viewport: ViewportState;
-  importError: string | null;
+  toolbarError: string | null;
   isExportingPng: boolean;
   fileInputRef: RefObject<HTMLInputElement>;
   onSelectTool: (tool: EditorTool) => void;
@@ -28,7 +28,7 @@ type EditorToolbarProps = {
 export function EditorToolbar({
   activeTool,
   fileInputRef,
-  importError,
+  toolbarError,
   isExportingPng,
   onExportLocalDraw,
   onExportPng,
@@ -92,9 +92,9 @@ export function EditorToolbar({
         <span>Zoom {Math.round(viewport.zoom * 100)}%</span>
         <span>X {Math.round(viewport.scrollX)}</span>
         <span>Y {Math.round(viewport.scrollY)}</span>
-        {importError ? (
+        {toolbarError ? (
           <span className="import-error" role="alert">
-            {importError}
+            {toolbarError}
           </span>
         ) : null}
       </div>

@@ -1,6 +1,6 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { DrawingDbRecord } from "../../shared/storage/indexedDb";
+import type { DrawingDbRecord } from "./drawingTypes";
 import { initialEditorState } from "../editor/editorReducer";
 import type { LocalDrawElement } from "../elements/elementTypes";
 import {

@@ -1,27 +1,8 @@
-import type { LocalDrawElement } from "../../features/elements/elementTypes";
-
 export const LOCALDRAW_DB_NAME = "localdraw";
 export const LOCALDRAW_DB_VERSION = 1;
 export const DRAWINGS_STORE_NAME = "drawings";
 
 export type IndexedDbStatus = "ready" | "unavailable";
-
-export type DrawingDbRecord = {
-  id: string;
-  name: string;
-  description?: string;
-  tags: string[];
-  elements: LocalDrawElement[];
-  viewport: {
-    zoom: number;
-    scrollX: number;
-    scrollY: number;
-  };
-  metadata: {
-    createdAt: string;
-    updatedAt: string;
-  };
-};
 
 export class IndexedDbUnavailableError extends Error {
   constructor(message = "IndexedDB is unavailable") {
@@ -89,27 +70,24 @@ function runTransaction<T>(
   );
 }
 
-export async function putDrawingRecord(record: DrawingDbRecord): Promise<void> {
+export async function putRecord<T extends { id: string }>(record: T): Promise<void> {
   await runTransaction("readwrite", (store) => store.put(record));
 }
 
-export async function getDrawingRecord(
+export async function getRecord<T extends { id: string }>(
   id: string,
-): Promise<DrawingDbRecord | null> {
-  const result = await runTransaction<DrawingDbRecord | undefined>(
-    "readonly",
-    (store) => store.get(id),
+): Promise<T | null> {
+  const result = await runTransaction<T | undefined>("readonly", (store) =>
+    store.get(id),
   );
 
   return result ?? null;
 }
 
-export async function getAllDrawingRecords(): Promise<DrawingDbRecord[]> {
-  return runTransaction<DrawingDbRecord[]>("readonly", (store) =>
-    store.getAll(),
-  );
+export async function getAllRecords<T extends { id: string }>(): Promise<T[]> {
+  return runTransaction<T[]>("readonly", (store) => store.getAll());
 }
 
-export async function deleteDrawingRecord(id: string): Promise<void> {
+export async function deleteRecord(id: string): Promise<void> {
   await runTransaction("readwrite", (store) => store.delete(id));
 }

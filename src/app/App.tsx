@@ -1,23 +1,10 @@
-import { useReducer, useRef } from "react";
 import { Editor } from "../features/editor/Editor";
-import { editorReducer, initialEditorState } from "../features/editor/editorReducer";
-import { useDrawingPersistence } from "../features/persistence/useDrawingPersistence";
 import { ProjectPanel } from "../features/projects/ProjectPanel";
-import { useDrawingProjects } from "../features/projects/useDrawingProjects";
 import { TechnicalDocPanel } from "../features/technical-doc/TechnicalDocPanel";
+import { useDrawingSession } from "../features/persistence/useDrawingSession";
 
 export function App() {
-  const [state, dispatch] = useReducer(editorReducer, initialEditorState);
-  const refreshSummariesRef = useRef<(() => Promise<void>) | null>(null);
-
-  const { flushSave, hydrated } = useDrawingPersistence(state, dispatch, {
-    onSaved: () => {
-      void refreshSummariesRef.current?.();
-    },
-  });
-
-  const projects = useDrawingProjects(state, dispatch, flushSave, hydrated);
-  refreshSummariesRef.current = projects.refreshSummaries;
+  const { state, dispatch, flushSave, projects } = useDrawingSession();
 
   return (
     <main className="app-shell" aria-label="LocalDraw editor">

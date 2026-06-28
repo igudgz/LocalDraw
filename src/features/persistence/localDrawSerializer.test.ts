@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DrawingDbRecord } from "../../shared/storage/indexedDb";
+import type { DrawingDbRecord } from "./drawingTypes";
 import type { LocalDrawElement } from "../elements/elementTypes";
 import {
   deserializeLocalDrawFile,

@@ -2,41 +2,26 @@ import { useCallback, useEffect, useState } from "react";
 import type { Dispatch } from "react";
 import type { EditorAction } from "../editor/editorActions";
 import type { EditorState } from "../editor/editorTypes";
-import { localProjectRepository } from "../persistence/localProjectRepository";
+import { drawingRecordToRestoreAction } from "../persistence/drawingBridge";
+import {
+  createDrawing,
+  deleteDrawing as deleteDrawingRecord,
+  duplicateDrawing as duplicateDrawingRecord,
+  getById,
+  listSummaries,
+  setActiveDrawingId,
+  updateMetadata,
+} from "../persistence/localProjectRepository";
+import type { DrawingDbRecord } from "../persistence/drawingTypes";
 import type { ProjectDetail, ProjectSummary } from "./projectTypes";
 
-function recordToProjectDetail(record: {
-  id: string;
-  name: string;
-  description?: string;
-  tags: string[];
-  metadata: { updatedAt: string };
-}): ProjectDetail {
+function recordToProjectDetail(record: DrawingDbRecord): ProjectDetail {
   return {
     id: record.id,
     name: record.name,
     description: record.description,
     tags: record.tags,
     updatedAt: record.metadata.updatedAt,
-  };
-}
-
-function recordToRestoreAction(record: {
-  id: string;
-  name: string;
-  elements: EditorState["elements"];
-  viewport: { zoom: number; scrollX: number; scrollY: number };
-  metadata: { createdAt: string; updatedAt: string };
-}): EditorAction {
-  return {
-    type: "restore-drawing",
-    drawing: {
-      id: record.id,
-      name: record.name,
-      elements: record.elements,
-      viewport: record.viewport,
-      metadata: record.metadata,
-    },
   };
 }
 
@@ -52,12 +37,12 @@ export function useDrawingProjects(
   );
 
   const refreshSummaries = useCallback(async () => {
-    const list = await localProjectRepository.listSummaries();
+    const list = await listSummaries();
     setSummaries(list);
   }, []);
 
   const loadSelectedDetail = useCallback(async (drawingId: string) => {
-    const record = await localProjectRepository.getById(drawingId);
+    const record = await getById(drawingId);
     setSelectedDetail(record ? recordToProjectDetail(record) : null);
   }, []);
 
@@ -81,13 +66,13 @@ export function useDrawingProjects(
 
       await flushSave();
 
-      const record = await localProjectRepository.getById(drawingId);
+      const record = await getById(drawingId);
       if (!record) {
         return;
       }
 
-      localProjectRepository.setActiveDrawingId(record.id);
-      dispatch(recordToRestoreAction(record));
+      setActiveDrawingId(record.id);
+      dispatch(drawingRecordToRestoreAction(record));
       await refreshSummaries();
     },
     [dispatch, flushSave, refreshSummaries, state.currentDrawing.id],
@@ -95,20 +80,20 @@ export function useDrawingProjects(
 
   const createNewDrawing = useCallback(async () => {
     await flushSave();
-    const record = await localProjectRepository.createDrawing();
-    dispatch(recordToRestoreAction(record));
+    const record = await createDrawing();
+    dispatch(drawingRecordToRestoreAction(record));
     await refreshSummaries();
   }, [dispatch, flushSave, refreshSummaries]);
 
   const duplicateDrawing = useCallback(
     async (drawingId: string) => {
       await flushSave();
-      const record = await localProjectRepository.duplicateDrawing(drawingId);
+      const record = await duplicateDrawingRecord(drawingId);
       if (!record) {
         return;
       }
 
-      dispatch(recordToRestoreAction(record));
+      dispatch(drawingRecordToRestoreAction(record));
       await refreshSummaries();
     },
     [dispatch, flushSave, refreshSummaries],
@@ -117,17 +102,17 @@ export function useDrawingProjects(
   const deleteDrawing = useCallback(
     async (drawingId: string) => {
       await flushSave();
-      await localProjectRepository.deleteDrawing(drawingId);
+      await deleteDrawingRecord(drawingId);
 
-      const remaining = await localProjectRepository.listSummaries();
+      const remaining = await listSummaries();
       if (drawingId === state.currentDrawing.id) {
         const nextRecord =
           remaining.length > 0
-            ? await localProjectRepository.getById(remaining[0].id)
-            : await localProjectRepository.createDrawing();
+            ? await getById(remaining[0].id)
+            : await createDrawing();
 
         if (nextRecord) {
-          dispatch(recordToRestoreAction(nextRecord));
+          dispatch(drawingRecordToRestoreAction(nextRecord));
         }
       }
 
@@ -143,7 +128,7 @@ export function useDrawingProjects(
         return;
       }
 
-      const updated = await localProjectRepository.updateMetadata(drawingId, {
+      const updated = await updateMetadata(drawingId, {
         name: trimmedName,
       });
       if (!updated) {
@@ -174,7 +159,7 @@ export function useDrawingProjects(
       drawingId: string,
       update: { description?: string; tags?: string[] },
     ) => {
-      const updated = await localProjectRepository.updateMetadata(
+      const updated = await updateMetadata(
         drawingId,
         update,
       );

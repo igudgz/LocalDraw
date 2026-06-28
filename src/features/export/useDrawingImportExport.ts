@@ -2,12 +2,10 @@ import { useCallback, useRef, useState, type ChangeEvent } from "react";
 import type { Dispatch } from "react";
 import type { EditorAction } from "../editor/editorActions";
 import type { EditorState } from "../editor/editorTypes";
+import { editorStateToDrawingRecord, drawingRecordToRestoreAction } from "../persistence/drawingBridge";
 import { parseLocalDrawFile } from "../persistence/localDrawImporter";
-import { localProjectRepository } from "../persistence/localProjectRepository";
-import {
-  drawingRecordFromEditorState,
-  exportAsLocalDraw,
-} from "./exportAsJson";
+import { getById, importDrawing } from "../persistence/localProjectRepository";
+import { exportAsLocalDraw } from "./exportAsJson";
 import { downloadPngExport } from "./exportAsPng";
 import { downloadSvgExport } from "./exportAsSvg";
 
@@ -23,26 +21,30 @@ export function useDrawingImportExport(
 ) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [isExportingPng, setIsExportingPng] = useState(false);
 
   const exportLocalDraw = useCallback(async () => {
-    const existing = await localProjectRepository.getById(state.currentDrawing.id);
-    const record = drawingRecordFromEditorState(state, existing);
+    setExportError(null);
+    const existing = await getById(state.currentDrawing.id);
+    const record = editorStateToDrawingRecord(state, existing);
     exportAsLocalDraw(record);
   }, [state]);
 
   const exportSvg = useCallback(() => {
+    setExportError(null);
     downloadSvgExport(state.elements, state.currentDrawing.name);
   }, [state.currentDrawing.name, state.elements]);
 
   const exportPng = useCallback(async () => {
+    setExportError(null);
     setIsExportingPng(true);
 
     try {
       await downloadPngExport(state.elements, state.currentDrawing.name);
     } catch (error) {
       console.error("Failed to export PNG", error);
-      setImportError("Failed to export PNG");
+      setExportError("Failed to export PNG");
     } finally {
       setIsExportingPng(false);
     }
@@ -50,6 +52,7 @@ export function useDrawingImportExport(
 
   const openImportPicker = useCallback(() => {
     setImportError(null);
+    setExportError(null);
     fileInputRef.current?.click();
   }, []);
 
@@ -71,17 +74,8 @@ export function useDrawingImportExport(
 
       await options.flushSave();
 
-      const record = await localProjectRepository.importDrawing(result.file);
-      dispatch({
-        type: "restore-drawing",
-        drawing: {
-          id: record.id,
-          name: record.name,
-          elements: record.elements,
-          viewport: record.viewport,
-          metadata: record.metadata,
-        },
-      });
+      const record = await importDrawing(result.file);
+      dispatch(drawingRecordToRestoreAction(record));
 
       await options.refreshSummaries();
     },
@@ -101,9 +95,13 @@ export function useDrawingImportExport(
     [handleImportFile],
   );
 
+  const toolbarError = importError ?? exportError;
+
   return {
     fileInputRef,
     importError,
+    exportError,
+    toolbarError,
     isExportingPng,
     exportLocalDraw,
     exportSvg,

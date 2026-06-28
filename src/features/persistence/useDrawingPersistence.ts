@@ -1,8 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch } from "react";
 import type { EditorAction } from "../editor/editorActions";
 import type { EditorState } from "../editor/editorTypes";
-import { localProjectRepository } from "./localProjectRepository";
+import { drawingRecordToRestoreAction } from "./drawingBridge";
+import {
+  createDrawing,
+  getById,
+  loadActiveDrawing,
+  saveFromEditorState,
+} from "./localProjectRepository";
 
 export const AUTOSAVE_DEBOUNCE_MS = 800;
 
@@ -55,8 +61,34 @@ export function useDrawingPersistence(
   stateRef.current = state;
   onSavedRef.current = options?.onSaved;
 
+  const persistableSignature = useMemo(
+    () =>
+      JSON.stringify({
+        drawingId: state.currentDrawing.id,
+        drawingName: state.currentDrawing.name,
+        drawingCreatedAt: state.currentDrawing.createdAt,
+        drawingUpdatedAt: state.currentDrawing.updatedAt,
+        elements: state.elements,
+        viewport: {
+          zoom: state.viewport.zoom,
+          scrollX: state.viewport.scrollX,
+          scrollY: state.viewport.scrollY,
+        },
+      }),
+    [
+      state.currentDrawing.id,
+      state.currentDrawing.name,
+      state.currentDrawing.createdAt,
+      state.currentDrawing.updatedAt,
+      state.elements,
+      state.viewport.zoom,
+      state.viewport.scrollX,
+      state.viewport.scrollY,
+    ],
+  );
+
   const flushSave = useCallback(async () => {
-    await localProjectRepository.saveFromEditorState(stateRef.current);
+    await saveFromEditorState(stateRef.current);
     onSavedRef.current?.();
   }, []);
 
@@ -65,23 +97,20 @@ export function useDrawingPersistence(
 
     async function hydrateFromStorage() {
       try {
-        const record = await localProjectRepository.loadActiveDrawing();
+        let record = await loadActiveDrawing();
         if (cancelled) {
           return;
         }
 
-        if (record) {
-          dispatch({
-            type: "restore-drawing",
-            drawing: {
-              id: record.id,
-              name: record.name,
-              elements: record.elements,
-              viewport: record.viewport,
-              metadata: record.metadata,
-            },
-          });
+        if (!record) {
+          record = await createDrawing();
         }
+
+        if (cancelled) {
+          return;
+        }
+
+        dispatch(drawingRecordToRestoreAction(record));
       } catch (error) {
         console.error("Failed to load drawing from IndexedDB", error);
       } finally {
@@ -115,7 +144,7 @@ export function useDrawingPersistence(
     return () => {
       debouncedSave.cancel();
     };
-  }, [state, flushSave]);
+  }, [persistableSignature, flushSave]);
 
   return {
     flushSave,

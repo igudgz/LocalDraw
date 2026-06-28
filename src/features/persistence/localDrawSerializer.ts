@@ -1,5 +1,5 @@
 import type { LocalDrawElement } from "../elements/elementTypes";
-import type { DrawingDbRecord } from "../../shared/storage/indexedDb";
+import type { DrawingDbRecord } from "./drawingTypes";
 
 export type LocalDrawFileVersion = 1;
 

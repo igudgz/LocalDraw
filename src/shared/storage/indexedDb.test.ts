@@ -1,13 +1,13 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { DrawingDbRecord } from "./indexedDb";
+import type { DrawingDbRecord } from "../../features/persistence/drawingTypes";
 import {
-  deleteDrawingRecord,
+  deleteRecord,
   DRAWINGS_STORE_NAME,
-  getAllDrawingRecords,
-  getDrawingRecord,
+  getAllRecords,
+  getRecord,
   LOCALDRAW_DB_NAME,
-  putDrawingRecord,
+  putRecord,
 } from "./indexedDb";
 
 const sampleRecord: DrawingDbRecord = {
@@ -38,7 +38,7 @@ describe("indexedDb", () => {
   });
 
   it("opens localdraw database with drawings store (REQ-001)", async () => {
-    await putDrawingRecord(sampleRecord);
+    await putRecord(sampleRecord);
 
     await new Promise<void>((resolve, reject) => {
       const request = indexedDB.open(LOCALDRAW_DB_NAME);
@@ -53,26 +53,26 @@ describe("indexedDb", () => {
   });
 
   it("persists and reads drawing records (REQ-001)", async () => {
-    await putDrawingRecord(sampleRecord);
+    await putRecord(sampleRecord);
 
-    const loaded = await getDrawingRecord(sampleRecord.id);
+    const loaded = await getRecord<DrawingDbRecord>(sampleRecord.id);
 
     expect(loaded).toEqual(sampleRecord);
   });
 
   it("lists and deletes drawing records (REQ-001)", async () => {
-    await putDrawingRecord(sampleRecord);
-    await putDrawingRecord({
+    await putRecord(sampleRecord);
+    await putRecord({
       ...sampleRecord,
       id: "drawing-2",
       name: "Second drawing",
     });
 
-    expect(await getAllDrawingRecords()).toHaveLength(2);
+    expect(await getAllRecords<DrawingDbRecord>()).toHaveLength(2);
 
-    await deleteDrawingRecord(sampleRecord.id);
+    await deleteRecord(sampleRecord.id);
 
-    expect(await getDrawingRecord(sampleRecord.id)).toBeNull();
-    expect(await getAllDrawingRecords()).toHaveLength(1);
+    expect(await getRecord(sampleRecord.id)).toBeNull();
+    expect(await getAllRecords<DrawingDbRecord>()).toHaveLength(1);
   });
 });
