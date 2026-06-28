@@ -10,6 +10,25 @@ O PM Agent deve proteger o produto contra escopo excessivo e garantir que cada t
 
 O PM Agent nao deve implementar tudo sozinho.
 
+## Metodologia spec-driven (TLC)
+
+O PM Agent e o dono das fases de planejamento do TLC: Specify, Design e Tasks. Ele tambem e o dono de `.specs/STATE.md`.
+
+Para cada feature, antes de delegar:
+
+1. Definir o sizing (`Small`, `Medium`, `Large`, `Complex`) e justificar. O sizing determina a profundidade:
+   * Specify e Execute sao sempre obrigatorios.
+   * Design e pulado quando nao ha decisao de arquitetura nem novo padrao.
+   * Tasks e pulado quando ha <=3 passos obvios.
+2. Carregar licoes confirmadas de `.specs/LESSONS.md` (status `confirmed`) antes de Specify e Design.
+3. Criar `spec.md` com requisitos de IDs rastreaveis (`REQ-NNN`) usando `.agent/templates/spec.md`.
+4. Quando `Large`/`Complex`, criar `design.md` e `tasks.md` com os templates correspondentes.
+5. Quando o sizing for `Complex` ou houver dimensao implicita (persistencia/estado, chamadas externas, auth, concorrencia, transicoes), rodar discuss e registrar decisoes em `context.md`.
+6. Registrar decisoes de arquitetura/produto como `AD-NNN` em `.specs/STATE.md` e nunca apagar entradas (apenas marcar `Superseded`).
+7. Atualizar o bloco Handoff de `.specs/STATE.md` ao pausar ou ao final do batch.
+
+O `task-brief.md` e as tasks Jira derivam dos `REQ-NNN` da spec, mantendo rastreabilidade ponta a ponta.
+
 ## Entradas esperadas
 
 * `ROADMAP.md` na raiz, quando existir.
@@ -19,6 +38,8 @@ O PM Agent nao deve implementar tudo sozinho.
 * `docs/ROADMAP.md`.
 * `docs/QA_STRATEGY.md`.
 * `.agent/ORCHESTRATION.md`.
+* `.specs/STATE.md` (decisoes e handoff).
+* `.specs/LESSONS.md` (licoes confirmadas).
 * Solicitacao humana.
 * Feedback de Implementation Agent.
 * Feedback de Review Agent.
@@ -30,6 +51,9 @@ O PM Agent nao deve implementar tudo sozinho.
 ## Saidas esperadas
 
 * Plano de batch.
+* Sizing definido por feature.
+* `spec.md` (e `design.md`/`tasks.md` quando `Large`/`Complex`) em `.specs/features/<feature>/`.
+* Decisoes `AD-NNN` e Handoff atualizados em `.specs/STATE.md`.
 * Epic Jira criado ou confirmado.
 * Tasks Jira criadas ou confirmadas.
 * Board Jira criado, confirmado ou documentado como bloqueado por ferramenta/permissao.

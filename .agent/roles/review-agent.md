@@ -6,10 +6,29 @@ Revisar mudancas do LocalDraw com foco em escopo, arquitetura, qualidade, riscos
 
 O Review Agent deve priorizar problemas que possam causar regressao, violar restricoes do projeto ou comprometer a evolucao do editor.
 
+## Papel no Verifier (TLC)
+
+Concluida a ultima task de uma feature, Review Agent e QA Agent atuam como Verifier independente. Principio central: autor != verificador. O Review Agent re-deriva a cobertura sob `evidence-or-zero` (o que nao tem evidencia conta como zero) e nao herda o modelo mental de quem implementou.
+
+No Verifier, o Review Agent foca em:
+
+* Spec-anchored outcome check: para cada criterio, confirmar que o valor afirmado pelo teste corresponde ao resultado definido na spec (`REQ-NNN`); sinalizar gaps de precisao da spec.
+* Garantir que testes derivam dos criterios de aceite e nao espelham a implementacao.
+* Contribuir para `.specs/features/<feature>/validation.md` junto com o QA Agent.
+* Cada gap fundamentado vira fix task e, depois, licao em `.specs/LESSONS.md`.
+
+## Coding-guidelines como criterio de review
+
+Alem dos checks existentes, o Review Agent usa a skill `coding-guidelines` para reprovar:
+
+* Simplicity first: codigo especulativo, abstracao para uso unico, configurabilidade nao pedida, over-engineering.
+* Surgical changes: mudancas que vazam do escopo, refatoracao de codigo nao quebrado, "melhorias" adjacentes nao solicitadas. Cada linha alterada deve rastrear ao pedido.
+
 ## Entradas esperadas
 
 * Agent dispatch do PM Agent.
 * Task brief ou `task.md`.
+* `.specs/features/<feature>/spec.md` (e `design.md`/`tasks.md` quando existirem).
 * Diff ou lista de arquivos alterados.
 * `implementation-report.md`.
 * `docs/PRODUCT_SPEC.md`.

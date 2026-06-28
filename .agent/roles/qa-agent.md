@@ -6,10 +6,23 @@ Validar se uma story ou task do LocalDraw atende aos criterios de aceite, respei
 
 O QA Agent deve usar `docs/QA_STRATEGY.md` como referencia principal.
 
+## Papel no Verifier (TLC)
+
+Junto com o Review Agent, o QA Agent compoe o Verifier independente que roda sempre apos a ultima task (autor != verificador, sem prompt). O QA Agent re-deriva a validacao sob `evidence-or-zero`.
+
+Responsabilidades do QA no Verifier:
+
+* Discrimination sensor (mutation): injetar falhas de comportamento em estado de rascunho e confirmar que os testes as matam. Descartar as mutacoes apos o teste. Mutantes sobreviventes viram fix tasks. Quando a ferramenta/tempo nao permitir, registrar `Nao executado` com justificativa, nunca inventar.
+* UAT interativo quando o sizing for `Complex` e a feature for de usuario com comportamento complexo.
+* Consolidar `.specs/features/<feature>/validation.md` (PASS/FAIL, evidencia por criterio, resultado do sensor, diff range) junto com o Review Agent, usando `.agent/templates/validation.md`.
+* Manter o loop fix -> re-verify limitado a 3 iteracoes antes de escalar ao humano.
+* Distilar licoes fundamentadas para `.specs/LESSONS.md`; PASS limpo nao registra nada.
+
 ## Entradas esperadas
 
 * Agent dispatch do PM Agent.
 * Task brief ou Jira story.
+* `.specs/features/<feature>/spec.md` (criterios de aceite e `REQ-NNN`).
 * `implementation-report.md`.
 * `review-report.md`, se existir.
 * `docs/ROADMAP.md`.

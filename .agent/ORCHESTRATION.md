@@ -25,6 +25,77 @@ Usuario
 
 O usuario humano deve revisar preferencialmente apenas o resultado final do batch. O PM Agent deve interromper a execucao e pedir revisao humana somente quando houver uma condicao obrigatoria de parada ou uma decisao humana pendente.
 
+## Metodologia spec-driven (TLC) integrada
+
+O LocalDraw adota a skill `tlc-spec-driven` como metodologia interna de cada feature, mantendo o modelo de papeis como loop externo. O modelo de papeis decide quem executa; o TLC decide como cada feature evolui em fases auto-dimensionadas.
+
+Mapa entre papeis e fases TLC:
+
+```text
+PM Agent          -> Specify, Design, Tasks (planejamento auto-dimensionado)
+Implementation    -> Execute (task atomica -> gate -> commit atomico)
+Review + QA       -> Verifier (autor != verificador, evidence-or-zero)
+Metrics + PM      -> Lessons + STATE handoff
+```
+
+### Auto-sizing
+
+Antes de iniciar uma feature, o PM Agent define o sizing, que determina a profundidade do fluxo:
+
+| Sizing | Quando | Specify | Design | Tasks | Execute |
+|--------|--------|---------|--------|-------|---------|
+| Small | <=3 arquivos, uma frase | inline | pular | pular | implementar + verificar inline |
+| Medium | feature clara, <10 tasks | spec breve | inline | implicitas | implementar + verificar |
+| Large | multi-componente | spec + REQ IDs | arquitetura | breakdown + dependencias | verificar por task |
+| Complex | ambiguidade, dominio novo | spec + discuss | research + arquitetura | breakdown + paralelizacao | UAT interativo |
+
+Regras:
+
+* Specify e Execute sao sempre obrigatorios.
+* Design e pulado quando nao ha decisao de arquitetura nem novo padrao.
+* Tasks e pulado quando ha <=3 passos obvios.
+* Safety valve: se a listagem inline do Execute revelar >5 passos ou dependencias complexas, criar `tasks.md` formal.
+
+### Estrutura `.specs/`
+
+Artefatos de spec vivem em `.specs/`; evidencia de execucao em batch continua em `.agent/runs/` (ver `AD-002` em `.specs/STATE.md`).
+
+```text
+.specs/
+  STATE.md                       # decisoes (AD-NNN) + handoff
+  LESSONS.md                     # playbook de licoes (Verifier alimenta)
+  features/<feature>/
+    spec.md                      # Specify (sempre)
+    context.md                   # decisoes de gray areas (so quando discuss roda)
+    design.md                    # Design (Large/Complex)
+    tasks.md                     # Tasks (Large/Complex)
+    validation.md                # relatorio do Verifier
+```
+
+Templates correspondentes em `.agent/templates/`: `spec.md`, `design.md`, `tasks.md`, `validation.md`.
+
+### Regras de execucao (nao negociaveis)
+
+* Testes derivam dos criterios de aceite da spec e afirmam o resultado definido na spec; nunca espelham a implementacao.
+* O gate (testes verdes) decide a conclusao da task, nao auto-avaliacao.
+* Um commit atomico por task. Nunca agrupar tasks; nunca enfraquecer, pular ou apagar testes para passar.
+* A execucao do commit segue a politica do repositorio: commit sob solicitacao humana (ver `AD-003`). A disciplina de 1 task = 1 commit e obrigatoria; o disparo do commit nao e automatico.
+* Apos a ultima task, o Verifier roda sempre (autor != verificador), sem prompt.
+
+### Verifier (sempre ativo)
+
+Concluida a ultima task, Review Agent e QA Agent atuam como Verifier independente:
+
+1. Spec-anchored outcome check: cada teste afirma o resultado definido na spec; sinalizar gaps de precisao.
+2. Discrimination sensor (mutation): injetar falhas em estado de rascunho e confirmar que os testes as matam; mutantes sobreviventes viram fix tasks. Quando inviavel, registrar `Nao executado` com justificativa.
+3. Escrever `.specs/features/<feature>/validation.md` (PASS/FAIL, evidencia por criterio, sensor, diff range).
+4. Loop fix -> re-verify limitado a 3 iteracoes antes de escalar ao humano.
+5. Distilar licoes: cada falha fundamentada vira entrada em `.specs/LESSONS.md`; PASS limpo nao registra nada.
+
+### Coding guidelines
+
+Agentes de desenvolvimento (Implementation, e Review na parte de codigo) seguem a skill `coding-guidelines`: pensar antes de codar, simplicidade primeiro, mudancas cirurgicas e execucao orientada a objetivo verificavel. Cada linha alterada deve rastrear ao pedido.
+
 ## Gate Jira antes do GitHub
 
 Antes de criar, publicar ou organizar o projeto no GitHub, o PM Agent deve garantir que o trabalho exista no Jira.

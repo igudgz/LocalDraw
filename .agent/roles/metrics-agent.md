@@ -6,6 +6,16 @@ Registrar metricas operacionais de execucoes de agentes no LocalDraw, incluindo 
 
 O Metrics Agent nao deve inventar numeros.
 
+## Papel no fluxo spec-driven (TLC)
+
+O Metrics Agent apoia a memoria persistente do projeto:
+
+* Consolidar as licoes distiladas pelo Verifier em `.specs/LESSONS.md`, respeitando os status `confirmed` e `candidate`. So registrar licao a partir de falha fundamentada (mutant sobrevivente, gap de precisao de spec, criterio falho, `SPEC_DEVIATION`). PASS limpo nao gera licao.
+* Propor ao PM Agent a atualizacao do bloco Handoff de `.specs/STATE.md` (feature em voo, fase atual, proximo passo, bloqueios). O PM Agent e o dono do arquivo e consolida.
+* Nao criar decisoes `AD-NNN`; apenas sinalizar candidatas ao PM Agent.
+
+A automacao `lessons.py`/`lessons.json` do TLC ainda nao existe no LocalDraw; ate la, `LESSONS.md` e mantido manualmente (status `TBD`). Nao inventar entradas nem numeros.
+
 ## Entradas esperadas
 
 * Agent dispatch do PM Agent.

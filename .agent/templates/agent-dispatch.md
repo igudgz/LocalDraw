@@ -44,9 +44,17 @@ TBD
 
 * [ ] TBD
 
+## Spec references (TLC)
+
+* Feature: TBD
+* Spec: `.specs/features/<feature>/spec.md` (REQ IDs: TBD)
+* Design/Tasks: TBD / Nao aplicavel (sizing)
+
 ## Constraints
 
 * Follow `.agent/ORCHESTRATION.md`.
+* Development agents (Implementation, and Review on code) follow the `coding-guidelines` skill: think before coding, simplicity first, surgical changes, goal-driven execution.
+* Execute follows TLC: tests derive from the spec acceptance criteria, the gate (passing tests) decides completion, one atomic commit per task (commit execution under the repo policy of committing on request), and the Verifier always runs after the last task.
 * Do not use `@excalidraw/excalidraw`.
 * Do not use official Excalidraw code or components.
 * Do not add ready-made whiteboard or visual editor libraries.
