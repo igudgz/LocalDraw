@@ -25,6 +25,16 @@ export type EditorAction =
       y: number;
     }
   | {
+      type: "update-element-label";
+      elementId: string;
+      label: string;
+    }
+  | {
+      type: "update-element-text";
+      elementId: string;
+      text: string;
+    }
+  | {
       type: "set-interaction";
       interaction: EditorInteraction;
     }

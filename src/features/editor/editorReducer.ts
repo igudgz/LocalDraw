@@ -1,5 +1,9 @@
 import type { EditorAction } from "./editorActions";
 import type { EditorState } from "./editorTypes";
+import {
+  estimateTextBounds,
+  translateElementTo,
+} from "../elements/elementGeometry";
 
 export const initialEditorState: EditorState = {
   elements: [],
@@ -60,14 +64,48 @@ export function editorReducer(
         ...state,
         elements: state.elements.map((element) =>
           element.id === action.elementId
+            ? translateElementTo(element, action.x, action.y)
+            : element,
+        ),
+      };
+    case "update-element-label":
+      return {
+        ...state,
+        elements: state.elements.map((element) =>
+          element.id === action.elementId && element.type === "arrow"
             ? {
                 ...element,
-                x: action.x,
-                y: action.y,
+                label: action.label || undefined,
                 updatedAt: new Date().toISOString(),
               }
             : element,
         ),
+      };
+    case "update-element-text":
+      return {
+        ...state,
+        elements: state.elements.map((element) => {
+          if (element.id !== action.elementId || element.type !== "text") {
+            return element;
+          }
+
+          const { width, height } = estimateTextBounds(
+            action.text,
+            element.fontSize,
+          );
+
+          return {
+            ...element,
+            text: action.text,
+            width,
+            height,
+            updatedAt: new Date().toISOString(),
+          };
+        }),
+        currentDrawing: {
+          ...state.currentDrawing,
+          updatedAt: new Date().toISOString(),
+        },
       };
     case "set-interaction":
       return {
@@ -127,4 +165,3 @@ export function editorReducer(
     }
   }
 }
-

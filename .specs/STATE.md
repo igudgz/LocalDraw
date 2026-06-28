@@ -2,15 +2,6 @@
 
 Memoria persistente do projeto para o fluxo spec-driven (TLC) integrado a orquestracao PM-driven.
 
-Este arquivo guarda dois blocos: o log de decisoes de arquitetura/produto e o snapshot de handoff entre sessoes/agentes.
-
-Regras:
-
-* O PM Agent e o dono deste arquivo. Outros agentes propoem entradas via relatorio; o PM Agent consolida.
-* Decisoes recebem ID incremental `AD-NNN` e nunca sao apagadas, apenas marcadas como `Superseded by AD-XXX`.
-* O handoff e sobrescrito a cada pausa/retomada para refletir o estado em voo.
-* Nao inventar decisoes. Se algo nao foi decidido, nao registrar.
-
 ## Decisions (AD-NNN)
 
 | ID | Data | Decisao | Contexto / Motivo | Status | Referencia |
@@ -22,10 +13,10 @@ Regras:
 
 ## Handoff
 
-* In-flight feature: Nenhuma (batch mvp-batch-004-persistence concluido)
-* Fase atual: Fase 12 concluida (import/export)
-* Proximo passo sugerido: Fase 13 atalhos de teclado ou proximo batch PM
-* Bloqueios: Nenhum
-* Decisoes pendentes de humano: Revisao final do batch; E2E manual opcional
+* In-flight feature: merge batch 004 (persistence) + batch 005 (techdoc) em `feat/mvp-batch-004-persistence`
+* Fase atual: Fase 12 (persistencia/export) + Fase 16 (technical doc) integradas via `EditorContext`
+* Proximo passo sugerido: AB-22 (Fase 17) — aguardando decisao humana sobre provider LLM; ou Fase 13 atalhos
+* Bloqueios: AB-22 parada obrigatoria (servico externo/dependencia nova)
+* Decisoes pendentes de humano: Provider LLM, dependencia npm, gestao de chaves; E2E manual batch 004
 * Ultima atualizacao: 2026-06-28
-* Batch concluido: mvp-batch-004-persistence (AB-15, AB-16, AB-17)
+* Batch concluido: mvp-batch-004-persistence (AB-15, AB-16, AB-17); main inclui mvp-batch-005-techdoc (AB-19–21)

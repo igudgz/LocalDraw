@@ -1,10 +1,15 @@
 import { Editor } from "../features/editor/Editor";
+import {
+  EditorProvider,
+  useEditorState,
+  useEditorSession,
+} from "../features/editor/EditorContext";
 import { ProjectPanel } from "../features/projects/ProjectPanel";
 import { TechnicalDocPanel } from "../features/technical-doc/TechnicalDocPanel";
-import { useDrawingSession } from "../features/persistence/useDrawingSession";
 
-export function App() {
-  const { state, dispatch, flushSave, projects } = useDrawingSession();
+function AppShell() {
+  const state = useEditorState();
+  const { projects } = useEditorSession();
 
   return (
     <main className="app-shell" aria-label="LocalDraw editor">
@@ -19,13 +24,16 @@ export function App() {
         onRenameDrawing={projects.renameDrawing}
         onUpdateMetadata={projects.updateDrawingMetadata}
       />
-      <Editor
-        dispatch={dispatch}
-        flushSave={flushSave}
-        refreshSummaries={projects.refreshSummaries}
-        state={state}
-      />
+      <Editor />
       <TechnicalDocPanel />
     </main>
+  );
+}
+
+export function App() {
+  return (
+    <EditorProvider>
+      <AppShell />
+    </EditorProvider>
   );
 }

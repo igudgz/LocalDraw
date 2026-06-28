@@ -1,26 +1,20 @@
-import type { Dispatch } from "react";
 import { EditorCanvas } from "./EditorCanvas";
+import {
+  useEditorDispatch,
+  useEditorSession,
+  useEditorState,
+} from "./EditorContext";
 import { EditorToolbar } from "./EditorToolbar";
-import type { EditorAction } from "./editorActions";
-import type { EditorState } from "./editorTypes";
 import { useDrawingImportExport } from "../export/useDrawingImportExport";
 
-type EditorProps = {
-  state: EditorState;
-  dispatch: Dispatch<EditorAction>;
-  flushSave: () => Promise<void>;
-  refreshSummaries: () => Promise<void>;
-};
+export function Editor() {
+  const state = useEditorState();
+  const dispatch = useEditorDispatch();
+  const { flushSave, projects } = useEditorSession();
 
-export function Editor({
-  dispatch,
-  flushSave,
-  refreshSummaries,
-  state,
-}: EditorProps) {
   const importExport = useDrawingImportExport(state, dispatch, {
     flushSave,
-    refreshSummaries,
+    refreshSummaries: projects.refreshSummaries,
   });
 
   return (
