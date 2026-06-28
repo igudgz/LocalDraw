@@ -1,4 +1,9 @@
-import type { EditorTool, ViewportState } from "./editorTypes";
+import type { LocalDrawElement } from "../elements/elementTypes";
+import type {
+  EditorInteraction,
+  EditorTool,
+  ViewportState,
+} from "./editorTypes";
 
 export type EditorAction =
   | {
@@ -8,4 +13,32 @@ export type EditorAction =
   | {
       type: "set-viewport";
       viewport: ViewportState;
+    }
+  | {
+      type: "set-selection";
+      elementId: string | null;
+    }
+  | {
+      type: "update-element";
+      elementId: string;
+      x: number;
+      y: number;
+    }
+  | {
+      type: "update-element-label";
+      elementId: string;
+      label: string;
+    }
+  | {
+      type: "set-interaction";
+      interaction: EditorInteraction;
+    }
+  | {
+      type: "add-element";
+      element: LocalDrawElement;
+    }
+  | {
+      type: "update-element-text";
+      elementId: string;
+      text: string;
     };

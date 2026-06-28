@@ -2,15 +2,6 @@
 
 Memoria persistente do projeto para o fluxo spec-driven (TLC) integrado a orquestracao PM-driven.
 
-Este arquivo guarda dois blocos: o log de decisoes de arquitetura/produto e o snapshot de handoff entre sessoes/agentes.
-
-Regras:
-
-* O PM Agent e o dono deste arquivo. Outros agentes propoem entradas via relatorio; o PM Agent consolida.
-* Decisoes recebem ID incremental `AD-NNN` e nunca sao apagadas, apenas marcadas como `Superseded by AD-XXX`.
-* O handoff e sobrescrito a cada pausa/retomada para refletir o estado em voo.
-* Nao inventar decisoes. Se algo nao foi decidido, nao registrar.
-
 ## Decisions (AD-NNN)
 
 | ID | Data | Decisao | Contexto / Motivo | Status | Referencia |
@@ -22,8 +13,9 @@ Regras:
 ## Handoff
 
 * In-flight feature: technical-doc (batch mvp-batch-005-techdoc)
-* Fase atual: 16 concluida (AB-19, AB-20, AB-21 done)
+* Fase atual: 16 concluida (AB-19, AB-20, AB-21 done); main inclui batch 003 (fases 4–6: elipse, texto, seta)
 * Proximo passo sugerido: AB-22 (Fase 17) — aguardando decisao humana sobre provider LLM, dependencia e chaves API
 * Bloqueios: AB-22 parada obrigatoria (servico externo/dependencia nova)
 * Decisoes pendentes de humano: Provider LLM (OpenAI/Anthropic/local), dependencia npm, gestao de chaves, backend proxy vs client-side
 * Ultima atualizacao: 2026-06-28
+* Branch: `feat/mvp-batch-005-techdoc`

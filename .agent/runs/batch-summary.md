@@ -2,24 +2,21 @@
 
 ## Batch ID
 
-MVP-BATCH-001
+MVP-BATCH-002
 
 ## Objective
 
-Executar o primeiro batch de desenvolvimento do MVP LocalDraw usando PM-driven orchestration em modo sequencial, cobrindo:
-
-* `LD-001-bootstrap`
-* `LD-002-viewport`
+Executar Fase 2 (selecao) e Fase 3 (retangulo) do MVP LocalDraw com orquestracao PM-driven e tracking Jira.
 
 ## Tasks Planned
 
-* `LD-001-bootstrap` - Fase 0: Bootstrap do projeto.
-* `LD-002-viewport` - Fase 1: Viewport do editor.
+* `LD-003-selection` - Fase 2: Ferramenta de selecao (Jira AB-7)
+* `LD-004-rectangle` - Fase 3: Ferramenta de retangulo (Jira AB-8)
 
 ## Tasks Completed
 
-* `LD-001-bootstrap`
-* `LD-002-viewport`
+* `LD-003-selection`
+* `LD-004-rectangle`
 
 ## Tasks Blocked
 
@@ -29,20 +26,27 @@ Executar o primeiro batch de desenvolvimento do MVP LocalDraw usando PM-driven o
 
 | Task ID | Status | Notes |
 | --- | --- | --- |
-| `LD-001-bootstrap` | Concluído | Review `Approved`; QA `Approved with notes`; Jira AB-5 em `Concluído`. |
-| `LD-002-viewport` | Concluído | Review `Approved with warnings`; QA `Approved with notes`; Jira AB-6 em `Concluído`. |
+| `LD-003-selection` | Concluido | Review Approved with warnings; QA Approved with notes; Jira AB-7 Concluido. |
+| `LD-004-rectangle` | Concluido | Review Approved with warnings; QA Approved with notes; Jira AB-8 Concluido. |
 
 ## Agents Dispatched
 
-* PM/Orchestrator Agent
-* Implementation Agent
-* Review Agent
-* QA Agent
-* Metrics Agent
+* PM Agent (orquestrador)
+* Implementation Agent (subagent x2)
+* Review Agent (subagent x2)
+* QA Agent (subagent x2)
+* Metrics Agent (PM consolidado)
 
 ## Subagents Used
 
-* Nenhum.
+| Parent | Subagent | Task | Resultado |
+| --- | --- | --- | --- |
+| PM | generalPurpose | LD-003 Implementation | Concluido |
+| PM | generalPurpose | LD-003 Review | Approved with warnings |
+| PM | generalPurpose | LD-003 QA | Approved with notes |
+| PM | generalPurpose | LD-004 Implementation | Concluido |
+| PM | generalPurpose | LD-004 Review | Approved with warnings |
+| PM | generalPurpose | LD-004 QA | Approved with notes |
 
 ## Jira Tracking
 
@@ -50,109 +54,67 @@ Executar o primeiro batch de desenvolvimento do MVP LocalDraw usando PM-driven o
 * Project key: `AB`
 * Epic key: `AB-4`
 * Board: Agents Board
-* Required columns: `Ready for development`, `in development`, `review`, `done`
-* Board setup status: Existente e usado por status equivalentes do workflow: `Ready for development`, `In development`, `Revisar`, `Concluído`.
+* Colunas operacionais: Ready for development, In development, Revisar, Concluido
 
 ## Jira Card Movement
 
-| Task ID | Jira Key | Start Column | Final Column | Transitions |
+| Task ID | Jira Key | Start | Final | Transitions / Comments |
 | --- | --- | --- | --- | --- |
-| `LD-001-bootstrap` | `AB-5` | Ready for development | Concluído | `31`; comment `10001`. |
-| `LD-002-viewport` | `AB-6` | Ready for development | Concluído | `21` -> In development, comment `10002`; `2` -> Revisar, comment `10003`; `31` -> Concluído, comment `10004`. |
+| `LD-003-selection` | AB-7 | Ready for development | Concluido | `21` In development; `2` Revisar; comment `10005`; `31` Concluido |
+| `LD-004-rectangle` | AB-8 | Ready for development | Concluido | `21` In development; `2` Revisar; comment `10006`; `31` Concluido |
 
 ## Main Files Changed
 
-* `README.md`
-* `package.json`
-* `package-lock.json`
-* `index.html`
-* `vite.config.ts`
-* `tsconfig.json`
-* `tsconfig.app.json`
-* `tsconfig.node.json`
-* `src/main.tsx`
-* `src/app/App.tsx`
+* `src/features/editor/editorActions.ts`
+* `src/features/editor/editorReducer.ts`
+* `src/features/editor/editorTypes.ts`
+* `src/features/editor/EditorViewport.tsx`
+* `src/features/selection/SelectionBox.tsx`
+* `src/features/selection/selectionUtils.ts`
+* `src/features/tools/selectTool.ts`
+* `src/features/tools/rectangleTool.ts`
+* `src/features/elements/*Element.tsx`
 * `src/app/app.css`
-* `src/features/editor/*`
-* `src/features/elements/*`
-* `src/features/tools/*`
-* `src/features/selection/*`
-* `src/features/history/*`
-* `src/features/persistence/*`
-* `src/features/projects/*`
-* `src/features/export/*`
-* `src/features/technical-doc/*`
-* `src/shared/*`
-* `.agent/tasks/*`
-* `.agent/runs/*`
+* `.agent/tasks/LD-003-selection/task.md`
+* `.agent/tasks/LD-004-rectangle/task.md`
+* `.agent/tasks/backlog.md`
+* `.agent/runs/LD-003-selection/*`
+* `.agent/runs/LD-004-rectangle/*`
 
 ## Checks Executed
 
-* `npm install`
-* `npm run build`
-* `npm run lint`
-* `npm audit --omit=optional`
-* `npm run dev` smoke HTTP local.
-* Smoke DOM/headless de viewport para SVG, grid, zoom, pan e debug.
-* Busca por dependências proibidas e termos de whiteboard/editor pronto.
-
-## Build/Lint/Test Results
-
-* Build: Pass.
-* Lint/typecheck: Pass.
-* Tests: Não há script dedicado de testes.
-* Audit: Pass, `found 0 vulnerabilities`.
-* Dev smoke: Pass.
-* Viewport smoke: Pass.
+* `npm run build` - Pass (subagents + PM)
+* `npm run lint` - Pass
+* `npm audit --omit=optional` - Pass (QA)
+* Smoke headless selecao/drag/deselect - Pass
+* Smoke headless rectangle create/select/move - Pass
+* Busca dependencias proibidas - Pass
 
 ## Key Decisions
 
-* Criada skill `coding-guidelines` em `C:\Users\igor2\.codex\skills\coding-guidelines\SKILL.md` a partir do repositório indicado pelo usuário.
-* Próximos dispatches passaram a usar contexto mínimo por agente para reduzir poluição de contexto.
-* O usuário autorizou MR/PR único com `LD-001-bootstrap` + `LD-002-viewport`.
-* Vite/plugin React foram atualizados para Vite 8.1.0 e `@vitejs/plugin-react` 6.0.3 para limpar `npm audit` sem adicionar dependência fora da stack aprovada.
+* Contexto minimo enviado a subagents (sem dump completo de docs).
+* Seed rectangle temporario em LD-003 removido em LD-004.
+* Playwright MCP indisponivel; smoke alternativo local (mesmo padrao batch anterior).
 
 ## Risks Found
 
-* Playwright MCP dedicado não estava disponível.
-* QA cobriu viewport com smoke headless local via alternativa.
-* Review registrou warning não bloqueante: navegação da viewport ainda não possui alternativa de teclado.
+* Hit-test usa bounding box para todos os tipos (aceitavel no MVP).
+* Painel Analysis ainda mostra ELEMENTS 0 com elementos no canvas (fora de escopo).
+* `pointercancel` pode commitar retangulo pequeno (P3).
 
-## Technical Debt Created
+## Technical Debt
 
-* Stubs de parser/technical-doc/export/persistence existem como fronteiras de arquitetura, mas sem contratos finais.
-* Acessibilidade completa de zoom/pan fica para fase futura.
-
-## Documentation Changes
-
-* `README.md` atualizado com instruções de execução e status.
-* Task briefs criados em `.agent/tasks/`.
-* Relatórios por task criados em `.agent/runs/`.
-
-## Operational Metrics
-
-* Iterations: LD-001 teve ajuste de audit npm; LD-002 teve interrupção/retomada por decisão de MR único.
-* Rework: Sim, operacional; sem mudança de escopo.
-* Commands executed: npm install/build/lint/audit/dev smoke, rg, git, Jira MCP.
-* Reports generated:
-  * `.agent/runs/LD-001-bootstrap/implementation-report.md`
-  * `.agent/runs/LD-001-bootstrap/review-report.md`
-  * `.agent/runs/LD-001-bootstrap/qa-report.md`
-  * `.agent/runs/LD-001-bootstrap/token-report.md`
-  * `.agent/runs/LD-002-viewport/implementation-report.md`
-  * `.agent/runs/LD-002-viewport/review-report.md`
-  * `.agent/runs/LD-002-viewport/qa-report.md`
-  * `.agent/runs/LD-002-viewport/token-report.md`
-
-## Token Usage Notes
-
-* Official token usage: Nao informado.
-* Notes: não havia fonte oficial de token nos artefatos disponíveis; valores não foram estimados.
+* Hit-test preciso por tipo de elemento (fases futuras).
+* Atualizar smoke LD-003 que referenciava seed-rectangle.
 
 ## Human Review Required
 
-Sim, revisar o PR/MR único com `LD-001-bootstrap` e `LD-002-viewport`.
+Sim — revisar alteracoes de codigo e decidir commits (politica: commit sob solicitacao).
 
 ## Next Recommended Batch
 
-* `LD-003-selection`: Fase 2 - Ferramenta de seleção.
+* `LD-005-ellipse` ou proxima fase do roadmap (Fase 4: elipse) — Jira AB-9 ja existe em Ready for development.
+
+## Token Usage
+
+Nao informado.

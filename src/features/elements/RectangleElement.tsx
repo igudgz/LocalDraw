@@ -7,6 +7,7 @@ type RectangleElementProps = {
 export function RectangleElement({ element }: RectangleElementProps) {
   return (
     <rect
+      data-element-id={element.id}
       x={element.x}
       y={element.y}
       width={element.width}

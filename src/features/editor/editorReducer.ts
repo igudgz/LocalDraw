@@ -1,5 +1,6 @@
 import type { EditorAction } from "./editorActions";
 import type { EditorState } from "./editorTypes";
+import { estimateTextBounds, translateElementTo } from "../elements/elementGeometry";
 
 export const initialEditorState: EditorState = {
   elements: [],
@@ -49,7 +50,80 @@ export function editorReducer(
         ...state,
         viewport: action.viewport,
       };
-    default:
+    case "set-selection":
+      return {
+        ...state,
+        selectedElementIds:
+          action.elementId === null ? [] : [action.elementId],
+      };
+    case "update-element":
+      return {
+        ...state,
+        elements: state.elements.map((element) =>
+          element.id === action.elementId
+            ? translateElementTo(element, action.x, action.y)
+            : element,
+        ),
+      };
+    case "update-element-label":
+      return {
+        ...state,
+        elements: state.elements.map((element) =>
+          element.id === action.elementId && element.type === "arrow"
+            ? {
+                ...element,
+                label: action.label || undefined,
+                updatedAt: new Date().toISOString(),
+              }
+            : element,
+        ),
+      };
+    case "set-interaction":
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          interaction: action.interaction,
+        },
+      };
+    case "add-element":
+      return {
+        ...state,
+        elements: [...state.elements, action.element],
+        currentDrawing: {
+          ...state.currentDrawing,
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    case "update-element-text":
+      return {
+        ...state,
+        elements: state.elements.map((element) => {
+          if (element.id !== action.elementId || element.type !== "text") {
+            return element;
+          }
+
+          const { width, height } = estimateTextBounds(
+            action.text,
+            element.fontSize,
+          );
+
+          return {
+            ...element,
+            text: action.text,
+            width,
+            height,
+            updatedAt: new Date().toISOString(),
+          };
+        }),
+        currentDrawing: {
+          ...state.currentDrawing,
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    default: {
+      const _exhaustive: never = action;
       return state;
+    }
   }
 }
