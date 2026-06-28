@@ -1,6 +1,6 @@
 import type { EditorAction } from "./editorActions";
 import type { EditorState } from "./editorTypes";
-import { estimateTextBounds } from "../tools/textTool";
+import { estimateTextBounds, translateElementTo } from "../elements/elementGeometry";
 
 export const initialEditorState: EditorState = {
   elements: [],
@@ -59,35 +59,11 @@ export function editorReducer(
     case "update-element":
       return {
         ...state,
-        elements: state.elements.map((element) => {
-          if (element.id !== action.elementId) {
-            return element;
-          }
-
-          const deltaX = action.x - element.x;
-          const deltaY = action.y - element.y;
-          const updatedAt = new Date().toISOString();
-
-          if (element.type === "arrow") {
-            return {
-              ...element,
-              x: action.x,
-              y: action.y,
-              startX: element.startX + deltaX,
-              startY: element.startY + deltaY,
-              endX: element.endX + deltaX,
-              endY: element.endY + deltaY,
-              updatedAt,
-            };
-          }
-
-          return {
-            ...element,
-            x: action.x,
-            y: action.y,
-            updatedAt,
-          };
-        }),
+        elements: state.elements.map((element) =>
+          element.id === action.elementId
+            ? translateElementTo(element, action.x, action.y)
+            : element,
+        ),
       };
     case "update-element-label":
       return {
@@ -151,4 +127,3 @@ export function editorReducer(
     }
   }
 }
-

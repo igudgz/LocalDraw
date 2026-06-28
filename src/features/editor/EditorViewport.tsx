@@ -1,7 +1,26 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  DrawPreviewOverlay,
+  SharedArrowheadMarker,
+} from "./DrawPreviewOverlay";
+import { ArrowLabelEditorOverlay } from "./ArrowLabelEditorOverlay";
+import { TextEditorOverlay } from "./TextEditorOverlay";
 import { ElementRenderer } from "../elements/ElementRenderer";
 import { SelectionBox } from "../selection/SelectionBox";
-import { findElementById, hitTestElementAtPoint } from "../selection/selectionUtils";
+import {
+  findElementById,
+  hitTestElementAtPoint,
+  type CanvasPoint,
+} from "../selection/selectionUtils";
+import {
+  createDragDrawSession,
+  createElementFromDrawSession,
+  getDrawPreview,
+  isDragDrawToolId,
+  shouldCommitDrawPreview,
+  type DragDrawSession,
+  type DrawPreview,
+} from "../tools/dragDrawTool";
 import {
   createSelectDragSession,
   getDraggedElementPosition,
@@ -9,39 +28,12 @@ import {
   type SelectDragSession,
 } from "../tools/selectTool";
 import {
-  createArrowDrawSession,
-  createArrowElement,
-  arrowToolId,
-  getArrowPreviewLine,
-  shouldCommitArrow,
-  type ArrowDrawSession,
-  type NormalizedArrowLine,
-} from "../tools/arrowTool";
-import {
-  createEllipseDrawSession,
-  createEllipseElement,
-  ellipseToolId,
-  getEllipsePreviewBounds,
-  shouldCommitEllipse,
-  type EllipseDrawSession,
-  type NormalizedEllipseBounds,
-} from "../tools/ellipseTool";
-import {
-  createRectangleDrawSession,
-  createRectangleElement,
-  getRectanglePreviewBounds,
-  rectangleToolId,
-  shouldCommitRectangle,
-  type NormalizedRect,
-  type RectangleDrawSession,
-} from "../tools/rectangleTool";
-import {
   createTextElement,
   DEFAULT_TEXT,
   textToolId,
 } from "../tools/textTool";
-import type { TextElement as TextElementType } from "../elements/elementTypes";
-import type { Dispatch, KeyboardEvent, PointerEvent, WheelEvent } from "react";
+import type { EditorTool } from "./editorTypes";
+import type { Dispatch, PointerEvent, WheelEvent } from "react";
 import type { EditorAction } from "./editorActions";
 import type { EditorState } from "./editorTypes";
 
@@ -54,6 +46,14 @@ const DEFAULT_VIEWPORT_SIZE = {
   height: 800,
 };
 
+const TOOL_VIEWPORT_CLASS: Partial<Record<EditorTool, string>> = {
+  select: "is-select-tool",
+  rectangle: "is-rectangle-tool",
+  ellipse: "is-ellipse-tool",
+  arrow: "is-arrow-tool",
+  text: "is-text-tool",
+};
+
 type EditorViewportProps = {
   dispatch: Dispatch<EditorAction>;
   state: EditorState;
@@ -64,11 +64,6 @@ type ViewportSize = {
   height: number;
 };
 
-type CanvasPoint = {
-  x: number;
-  y: number;
-};
-
 type PanSession = {
   pointerId: number;
   startClientX: number;
@@ -76,71 +71,6 @@ type PanSession = {
   startScrollX: number;
   startScrollY: number;
 };
-
-type TextEditorOverlayProps = {
-  element: TextElementType;
-  draftText: string;
-  scrollX: number;
-  scrollY: number;
-  zoom: number;
-  onDraftChange: (value: string) => void;
-  onCommit: () => void;
-};
-
-function TextEditorOverlay({
-  element,
-  draftText,
-  onCommit,
-  onDraftChange,
-  scrollX,
-  scrollY,
-  zoom,
-}: TextEditorOverlayProps) {
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
-
-  useEffect(() => {
-    const input = inputRef.current;
-
-    if (!input) {
-      return;
-    }
-
-    input.focus();
-    input.select();
-  }, [element.id]);
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      onCommit();
-    }
-  };
-
-  return (
-    <textarea
-      ref={inputRef}
-      className="text-editor-overlay"
-      aria-label="Edit text"
-      value={draftText}
-      rows={1}
-      style={{
-        left: (element.x - scrollX) * zoom,
-        top: (element.y - element.height - scrollY) * zoom,
-        width: Math.max(element.width, element.fontSize * 2) * zoom,
-        minHeight: element.height * zoom,
-        color: element.strokeColor,
-        fontFamily: element.fontFamily,
-        fontSize: element.fontSize * zoom,
-        lineHeight: `${element.height * zoom}px`,
-        opacity: element.opacity,
-      }}
-      onBlur={onCommit}
-      onChange={(event) => onDraftChange(event.target.value)}
-      onKeyDown={handleKeyDown}
-      onPointerDown={(event) => event.stopPropagation()}
-    />
-  );
-}
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -161,31 +91,34 @@ function clampViewportPosition(
   };
 }
 
+function releasePointerCapture(
+  event: PointerEvent<SVGSVGElement>,
+  pointerId: number,
+) {
+  if (event.currentTarget.hasPointerCapture(pointerId)) {
+    event.currentTarget.releasePointerCapture(pointerId);
+  }
+}
+
 export function EditorViewport({ dispatch, state }: EditorViewportProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const panSessionRef = useRef<PanSession | null>(null);
   const selectSessionRef = useRef<SelectDragSession | null>(null);
-  const rectangleSessionRef = useRef<RectangleDrawSession | null>(null);
-  const ellipseSessionRef = useRef<EllipseDrawSession | null>(null);
-  const arrowSessionRef = useRef<ArrowDrawSession | null>(null);
+  const drawSessionRef = useRef<DragDrawSession | null>(null);
   const [viewportSize, setViewportSize] = useState<ViewportSize>(
     DEFAULT_VIEWPORT_SIZE,
   );
   const [pointerPosition, setPointerPosition] = useState<CanvasPoint | null>(
     null,
   );
-  const [rectanglePreview, setRectanglePreview] = useState<NormalizedRect | null>(
-    null,
-  );
-  const [ellipsePreview, setEllipsePreview] = useState<NormalizedEllipseBounds | null>(
-    null,
-  );
-  const [arrowPreview, setArrowPreview] = useState<NormalizedArrowLine | null>(
-    null,
-  );
+  const [drawPreview, setDrawPreview] = useState<DrawPreview | null>(null);
   const [isPanning, setIsPanning] = useState(false);
-  const [editingElementId, setEditingElementId] = useState<string | null>(null);
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [draftText, setDraftText] = useState("");
+  const [editingArrowLabelId, setEditingArrowLabelId] = useState<string | null>(
+    null,
+  );
+  const [draftArrowLabel, setDraftArrowLabel] = useState("");
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -226,14 +159,14 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
     dispatch({ type: "set-viewport", viewport: nextViewport });
   };
 
-  const startTextEditing = (element: TextElementType) => {
-    setEditingElementId(element.id);
-    setDraftText(element.text);
-    dispatch({ type: "set-selection", elementId: element.id });
+  const startTextEditing = (elementId: string, text: string) => {
+    setEditingTextId(elementId);
+    setDraftText(text);
+    dispatch({ type: "set-selection", elementId });
   };
 
   const commitTextEdit = () => {
-    if (editingElementId === null) {
+    if (editingTextId === null) {
       return;
     }
 
@@ -242,11 +175,31 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
 
     dispatch({
       type: "update-element-text",
-      elementId: editingElementId,
+      elementId: editingTextId,
       text: finalText,
     });
-    setEditingElementId(null);
+    setEditingTextId(null);
     setDraftText("");
+  };
+
+  const startArrowLabelEditing = (elementId: string, label?: string) => {
+    setEditingArrowLabelId(elementId);
+    setDraftArrowLabel(label ?? "");
+    dispatch({ type: "set-selection", elementId });
+  };
+
+  const commitArrowLabelEdit = () => {
+    if (editingArrowLabelId === null) {
+      return;
+    }
+
+    dispatch({
+      type: "update-element-label",
+      elementId: editingArrowLabelId,
+      label: draftArrowLabel.trim(),
+    });
+    setEditingArrowLabelId(null);
+    setDraftArrowLabel("");
   };
 
   const getCanvasPoint = (
@@ -314,51 +267,17 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
       return;
     }
 
-    if (state.activeTool === rectangleToolId) {
+    if (isDragDrawToolId(state.activeTool)) {
       const canvasPoint = getCanvasPoint(event);
 
       event.preventDefault();
       event.currentTarget.setPointerCapture(event.pointerId);
-      rectangleSessionRef.current = createRectangleDrawSession(
+      drawSessionRef.current = createDragDrawSession(
+        state.activeTool,
         event.pointerId,
         canvasPoint,
       );
-      setRectanglePreview(getRectanglePreviewBounds(
-        rectangleSessionRef.current,
-        canvasPoint,
-      ));
-      return;
-    }
-
-    if (state.activeTool === ellipseToolId) {
-      const canvasPoint = getCanvasPoint(event);
-
-      event.preventDefault();
-      event.currentTarget.setPointerCapture(event.pointerId);
-      ellipseSessionRef.current = createEllipseDrawSession(
-        event.pointerId,
-        canvasPoint,
-      );
-      setEllipsePreview(getEllipsePreviewBounds(
-        ellipseSessionRef.current,
-        canvasPoint,
-      ));
-      return;
-    }
-
-    if (state.activeTool === arrowToolId) {
-      const canvasPoint = getCanvasPoint(event);
-
-      event.preventDefault();
-      event.currentTarget.setPointerCapture(event.pointerId);
-      arrowSessionRef.current = createArrowDrawSession(
-        event.pointerId,
-        canvasPoint,
-      );
-      setArrowPreview(getArrowPreviewLine(
-        arrowSessionRef.current,
-        canvasPoint,
-      ));
+      setDrawPreview(getDrawPreview(drawSessionRef.current, canvasPoint));
       return;
     }
 
@@ -368,8 +287,7 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
 
       event.preventDefault();
       dispatch({ type: "add-element", element });
-      dispatch({ type: "set-selection", elementId: element.id });
-      startTextEditing(element);
+      startTextEditing(element.id, element.text);
       return;
     }
 
@@ -447,159 +365,72 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
       return;
     }
 
-    const rectangleSession = rectangleSessionRef.current;
+    const drawSession = drawSessionRef.current;
 
-    if (rectangleSession && rectangleSession.pointerId === event.pointerId) {
+    if (drawSession && drawSession.pointerId === event.pointerId) {
       event.preventDefault();
-      setRectanglePreview(
-        getRectanglePreviewBounds(rectangleSession, getCanvasPoint(event)),
-      );
-      return;
+      setDrawPreview(getDrawPreview(drawSession, getCanvasPoint(event)));
     }
-
-    const ellipseSession = ellipseSessionRef.current;
-
-    if (ellipseSession && ellipseSession.pointerId === event.pointerId) {
-      event.preventDefault();
-      setEllipsePreview(
-        getEllipsePreviewBounds(ellipseSession, getCanvasPoint(event)),
-      );
-      return;
-    }
-
-    const arrowSession = arrowSessionRef.current;
-
-    if (!arrowSession || arrowSession.pointerId !== event.pointerId) {
-      return;
-    }
-
-    event.preventDefault();
-    setArrowPreview(
-      getArrowPreviewLine(arrowSession, getCanvasPoint(event)),
-    );
   };
 
   const stopPan = (event: PointerEvent<SVGSVGElement>) => {
-    if (panSessionRef.current?.pointerId === event.pointerId) {
-      panSessionRef.current = null;
-      setIsPanning(false);
+    const panSession = panSessionRef.current;
 
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-        event.currentTarget.releasePointerCapture(event.pointerId);
-      }
+    if (!panSession || panSession.pointerId !== event.pointerId) {
+      return;
     }
+
+    panSessionRef.current = null;
+    setIsPanning(false);
+    releasePointerCapture(event, event.pointerId);
   };
 
   const stopSelectDrag = (event: PointerEvent<SVGSVGElement>) => {
-    if (selectSessionRef.current?.pointerId === event.pointerId) {
-      selectSessionRef.current = null;
-      dispatch({ type: "set-interaction", interaction: "idle" });
+    const selectSession = selectSessionRef.current;
 
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-        event.currentTarget.releasePointerCapture(event.pointerId);
+    if (!selectSession || selectSession.pointerId !== event.pointerId) {
+      return;
+    }
+
+    selectSessionRef.current = null;
+    dispatch({ type: "set-interaction", interaction: "idle" });
+    releasePointerCapture(event, event.pointerId);
+  };
+
+  const stopDraw = (event: PointerEvent<SVGSVGElement>) => {
+    const drawSession = drawSessionRef.current;
+
+    if (!drawSession || drawSession.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const preview = getDrawPreview(drawSession, getCanvasPoint(event));
+
+    drawSessionRef.current = null;
+    setDrawPreview(null);
+
+    if (shouldCommitDrawPreview(preview)) {
+      const element = createElementFromDrawSession(
+        drawSession,
+        preview,
+        state.styleDefaults,
+      );
+
+      dispatch({ type: "add-element", element });
+      dispatch({ type: "set-selection", elementId: element.id });
+
+      if (element.type === "arrow") {
+        startArrowLabelEditing(element.id);
       }
     }
-  };
 
-  const stopRectangleDraw = (event: PointerEvent<SVGSVGElement>) => {
-    const rectangleSession = rectangleSessionRef.current;
-
-    if (!rectangleSession || rectangleSession.pointerId !== event.pointerId) {
-      return;
-    }
-
-    const bounds = getRectanglePreviewBounds(
-      rectangleSession,
-      getCanvasPoint(event),
-    );
-
-    rectangleSessionRef.current = null;
-    setRectanglePreview(null);
-
-    if (shouldCommitRectangle(bounds)) {
-      const element = createRectangleElement(bounds, state.styleDefaults);
-
-      dispatch({ type: "add-element", element });
-      dispatch({ type: "set-selection", elementId: element.id });
-    }
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  };
-
-  const stopEllipseDraw = (event: PointerEvent<SVGSVGElement>) => {
-    const ellipseSession = ellipseSessionRef.current;
-
-    if (!ellipseSession || ellipseSession.pointerId !== event.pointerId) {
-      return;
-    }
-
-    const bounds = getEllipsePreviewBounds(
-      ellipseSession,
-      getCanvasPoint(event),
-    );
-
-    ellipseSessionRef.current = null;
-    setEllipsePreview(null);
-
-    if (shouldCommitEllipse(bounds)) {
-      const element = createEllipseElement(bounds, state.styleDefaults);
-
-      dispatch({ type: "add-element", element });
-      dispatch({ type: "set-selection", elementId: element.id });
-    }
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  };
-
-  const promptArrowLabel = (elementId: string, currentLabel?: string) => {
-    const label = window.prompt("Arrow label (optional):", currentLabel ?? "");
-
-    if (label === null) {
-      return;
-    }
-
-    dispatch({
-      type: "update-element-label",
-      elementId,
-      label: label.trim(),
-    });
-  };
-
-  const stopArrowDraw = (event: PointerEvent<SVGSVGElement>) => {
-    const arrowSession = arrowSessionRef.current;
-
-    if (!arrowSession || arrowSession.pointerId !== event.pointerId) {
-      return;
-    }
-
-    const line = getArrowPreviewLine(arrowSession, getCanvasPoint(event));
-
-    arrowSessionRef.current = null;
-    setArrowPreview(null);
-
-    if (shouldCommitArrow(line)) {
-      const element = createArrowElement(line, state.styleDefaults);
-
-      dispatch({ type: "add-element", element });
-      dispatch({ type: "set-selection", elementId: element.id });
-      promptArrowLabel(element.id);
-    }
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
+    releasePointerCapture(event, event.pointerId);
   };
 
   const handlePointerUp = (event: PointerEvent<SVGSVGElement>) => {
     stopPan(event);
     stopSelectDrag(event);
-    stopRectangleDraw(event);
-    stopEllipseDraw(event);
-    stopArrowDraw(event);
+    stopDraw(event);
   };
 
   const handlePointerLeave = () => {
@@ -609,7 +440,11 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
   };
 
   const handleDoubleClick = (event: PointerEvent<SVGSVGElement>) => {
-    if (state.activeTool !== selectToolId || editingElementId !== null) {
+    if (
+      state.activeTool !== selectToolId ||
+      editingTextId !== null ||
+      editingArrowLabelId !== null
+    ) {
       return;
     }
 
@@ -629,13 +464,12 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
     event.preventDefault();
 
     if (hitElement.type === "text") {
-      startTextEditing(hitElement);
+      startTextEditing(hitElement.id, hitElement.text);
       return;
     }
 
     if (hitElement.type === "arrow") {
-      dispatch({ type: "set-selection", elementId: hitElementId });
-      promptArrowLabel(hitElementId, hitElement.label);
+      startArrowLabelEditing(hitElement.id, hitElement.label);
     }
   };
 
@@ -643,14 +477,19 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
   const selectedElement = selectedElementId
     ? findElementById(state.elements, selectedElementId)
     : undefined;
-  const editingElement =
-    editingElementId === null
+  const editingTextElement =
+    editingTextId === null
       ? undefined
-      : findElementById(state.elements, editingElementId);
+      : findElementById(state.elements, editingTextId);
+  const editingArrowElement =
+    editingArrowLabelId === null
+      ? undefined
+      : findElementById(state.elements, editingArrowLabelId);
+  const toolClass = TOOL_VIEWPORT_CLASS[state.activeTool] ?? "";
 
   return (
     <div
-      className={`editor-viewport ${isPanning ? "is-panning" : ""} ${state.activeTool === selectToolId ? "is-select-tool" : ""} ${state.activeTool === rectangleToolId ? "is-rectangle-tool" : ""} ${state.activeTool === ellipseToolId ? "is-ellipse-tool" : ""} ${state.activeTool === arrowToolId ? "is-arrow-tool" : ""} ${state.activeTool === textToolId ? "is-text-tool" : ""}`}
+      className={`editor-viewport ${isPanning ? "is-panning" : ""} ${toolClass}`.trim()}
       aria-label="Editor viewport"
     >
       <svg
@@ -676,6 +515,7 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
           >
             <path className="canvas-grid-line" d="M 50 0 L 0 0 0 50" />
           </pattern>
+          <SharedArrowheadMarker />
         </defs>
         <rect
           className="canvas-background"
@@ -696,53 +536,17 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
         ) : null}
         <ElementRenderer
           elements={state.elements}
-          editingElementId={editingElementId}
+          editingElementId={editingTextId}
         />
-        {rectanglePreview ? (
-          <rect
-            className="rectangle-preview"
-            x={rectanglePreview.x}
-            y={rectanglePreview.y}
-            width={rectanglePreview.width}
-            height={rectanglePreview.height}
-            fill={state.styleDefaults.backgroundColor}
-            opacity={state.styleDefaults.opacity}
-            stroke={state.styleDefaults.strokeColor}
-            strokeWidth={state.styleDefaults.strokeWidth}
-            strokeDasharray="6 4"
-            pointerEvents="none"
+        {drawPreview ? (
+          <DrawPreviewOverlay
+            preview={drawPreview}
+            styleDefaults={state.styleDefaults}
           />
         ) : null}
-        {ellipsePreview ? (
-          <ellipse
-            className="ellipse-preview"
-            cx={ellipsePreview.x + ellipsePreview.width / 2}
-            cy={ellipsePreview.y + ellipsePreview.height / 2}
-            rx={ellipsePreview.width / 2}
-            ry={ellipsePreview.height / 2}
-            fill={state.styleDefaults.backgroundColor}
-            opacity={state.styleDefaults.opacity}
-            stroke={state.styleDefaults.strokeColor}
-            strokeWidth={state.styleDefaults.strokeWidth}
-            strokeDasharray="6 4"
-            pointerEvents="none"
-          />
-        ) : null}
-        {arrowPreview ? (
-          <line
-            className="arrow-preview"
-            x1={arrowPreview.startX}
-            y1={arrowPreview.startY}
-            x2={arrowPreview.endX}
-            y2={arrowPreview.endY}
-            stroke={state.styleDefaults.strokeColor}
-            strokeWidth={state.styleDefaults.strokeWidth}
-            opacity={state.styleDefaults.opacity}
-            strokeDasharray="6 4"
-            pointerEvents="none"
-          />
-        ) : null}
-        {selectedElement && editingElementId !== selectedElement.id ? (
+        {selectedElement &&
+        editingTextId !== selectedElement.id &&
+        editingArrowLabelId !== selectedElement.id ? (
           <SelectionBox element={selectedElement} />
         ) : null}
         {state.elements.length === 0 ? (
@@ -751,15 +555,26 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
           </text>
         ) : null}
       </svg>
-      {editingElement?.type === "text" ? (
+      {editingTextElement?.type === "text" ? (
         <TextEditorOverlay
           draftText={draftText}
-          element={editingElement}
+          element={editingTextElement}
           scrollX={boundedPosition.scrollX}
           scrollY={boundedPosition.scrollY}
           zoom={viewport.zoom}
           onCommit={commitTextEdit}
           onDraftChange={setDraftText}
+        />
+      ) : null}
+      {editingArrowElement?.type === "arrow" ? (
+        <ArrowLabelEditorOverlay
+          draftLabel={draftArrowLabel}
+          element={editingArrowElement}
+          scrollX={boundedPosition.scrollX}
+          scrollY={boundedPosition.scrollY}
+          zoom={viewport.zoom}
+          onCommit={commitArrowLabelEdit}
+          onDraftChange={setDraftArrowLabel}
         />
       ) : null}
       <div className="viewport-debug" aria-label="Viewport debug">

@@ -29,6 +29,10 @@ export function ElementRenderer({
             }
 
             return <TextElement key={element.id} element={element} />;
+          default: {
+            const _exhaustive: never = element;
+            return _exhaustive;
+          }
         }
       })}
     </>

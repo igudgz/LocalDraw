@@ -204,6 +204,18 @@ button {
   z-index: 2;
 }
 
+.arrow-label-editor-overlay {
+  position: absolute;
+  margin: 0;
+  padding: 2px 6px;
+  border: 1px solid #2563eb;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 95%);
+  outline: none;
+  min-width: 80px;
+  z-index: 2;
+}
+
 .rectangle-preview {
   pointer-events: none;
 }

@@ -1,4 +1,5 @@
 import type { LocalDrawElement } from "../elements/elementTypes";
+import { getElementBounds } from "../elements/elementGeometry";
 
 type SelectionBoxProps = {
   element: LocalDrawElement;
@@ -6,34 +7,16 @@ type SelectionBoxProps = {
 
 const SELECTION_PADDING = 4;
 
-function getSelectionBounds(element: LocalDrawElement) {
-  if (element.type === "text") {
-    return {
-      x: element.x - SELECTION_PADDING,
-      y: element.y - element.height - SELECTION_PADDING,
-      width: element.width + SELECTION_PADDING * 2,
-      height: element.height + SELECTION_PADDING * 2,
-    };
-  }
-
-  return {
-    x: element.x - SELECTION_PADDING,
-    y: element.y - SELECTION_PADDING,
-    width: element.width + SELECTION_PADDING * 2,
-    height: element.height + SELECTION_PADDING * 2,
-  };
-}
-
 export function SelectionBox({ element }: SelectionBoxProps) {
-  const bounds = getSelectionBounds(element);
+  const bounds = getElementBounds(element);
 
   return (
     <rect
       className="selection-box"
-      x={bounds.x}
-      y={bounds.y}
-      width={bounds.width}
-      height={bounds.height}
+      x={bounds.x - SELECTION_PADDING}
+      y={bounds.y - SELECTION_PADDING}
+      width={bounds.width + SELECTION_PADDING * 2}
+      height={bounds.height + SELECTION_PADDING * 2}
       pointerEvents="none"
     />
   );

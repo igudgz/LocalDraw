@@ -1,4 +1,8 @@
 import type { StyleDefaults } from "../editor/editorTypes";
+import {
+  normalizeBoundsFromDrag,
+  type Bounds,
+} from "../elements/elementGeometry";
 import type { ArrowElement } from "../elements/elementTypes";
 import type { CanvasPoint } from "../selection/selectionUtils";
 import { createId } from "../../shared/utils/ids";
@@ -7,56 +11,29 @@ export const arrowToolId = "arrow";
 
 const MIN_ARROW_LENGTH = 1;
 
-export type ArrowDrawSession = {
-  pointerId: number;
-  startPoint: CanvasPoint;
-};
-
-export type NormalizedArrowLine = {
+export type NormalizedArrowLine = Bounds & {
   startX: number;
   startY: number;
   endX: number;
   endY: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
 };
-
-export function createArrowDrawSession(
-  pointerId: number,
-  startPoint: CanvasPoint,
-): ArrowDrawSession {
-  return {
-    pointerId,
-    startPoint,
-  };
-}
 
 export function normalizeArrowLine(
   startPoint: CanvasPoint,
   endPoint: CanvasPoint,
 ): NormalizedArrowLine {
-  const startX = startPoint.x;
-  const startY = startPoint.y;
-  const endX = endPoint.x;
-  const endY = endPoint.y;
-  const x = Math.min(startX, endX);
-  const y = Math.min(startY, endY);
-  const width = Math.abs(endX - startX);
-  const height = Math.abs(endY - startY);
+  const bounds = normalizeBoundsFromDrag(startPoint, endPoint);
 
-  return { startX, startY, endX, endY, x, y, width, height };
+  return {
+    startX: startPoint.x,
+    startY: startPoint.y,
+    endX: endPoint.x,
+    endY: endPoint.y,
+    ...bounds,
+  };
 }
 
-export function getArrowPreviewLine(
-  session: ArrowDrawSession,
-  currentPoint: CanvasPoint,
-): NormalizedArrowLine {
-  return normalizeArrowLine(session.startPoint, currentPoint);
-}
-
-export function shouldCommitArrow(line: NormalizedArrowLine): boolean {
+export function shouldCommitArrowLine(line: NormalizedArrowLine): boolean {
   const length = Math.hypot(line.endX - line.startX, line.endY - line.startY);
   return length >= MIN_ARROW_LENGTH;
 }
