@@ -29,12 +29,19 @@ function isPointInElement(
   switch (element.type) {
     case "rectangle":
     case "ellipse":
-    case "text":
     case "arrow":
       return isPointInRect(
         point,
         element.x,
         element.y,
+        element.width,
+        element.height,
+      );
+    case "text":
+      return isPointInRect(
+        point,
+        element.x,
+        element.y - element.height,
         element.width,
         element.height,
       );

@@ -25,10 +25,20 @@ export type EditorAction =
       y: number;
     }
   | {
+      type: "update-element-label";
+      elementId: string;
+      label: string;
+    }
+  | {
       type: "set-interaction";
       interaction: EditorInteraction;
     }
   | {
       type: "add-element";
       element: LocalDrawElement;
+    }
+  | {
+      type: "update-element-text";
+      elementId: string;
+      text: string;
     };
