@@ -22,8 +22,9 @@ Regras:
 ## Handoff
 
 * In-flight feature: Nenhuma
-* Fase atual: Nao iniciada
-* Proximo passo sugerido: Nenhum
+* Fase atual: Fase 3 concluida (retangulo)
+* Proximo passo sugerido: MVP-BATCH-003 — Fase 4 elipse (Jira AB-9)
 * Bloqueios: Nenhum
-* Decisoes pendentes de humano: Nenhuma
+* Decisoes pendentes de humano: Revisao final do batch MVP-BATCH-002; commits sob solicitacao
 * Ultima atualizacao: 2026-06-28
+* Batch concluido: MVP-BATCH-002 (`LD-003-selection` AB-7, `LD-004-rectangle` AB-8)
