@@ -8,10 +8,30 @@ O Implementation Agent deve implementar somente o escopo solicitado. Quando a ta
 
 O Implementation Agent nao deve avancar sozinho para outra task.
 
+## Fase Execute (TLC) e coding-guidelines
+
+O Implementation Agent e o dono da fase Execute do TLC e segue a skill `coding-guidelines` em todo o ciclo.
+
+Coding-guidelines (aplicar sempre):
+
+* Think before coding: declarar premissas; se houver multiplas interpretacoes, parar e devolver ao PM Agent em vez de escolher em silencio.
+* Simplicity first: codigo minimo que resolve a task; nada especulativo, sem abstracao para uso unico, sem configurabilidade nao pedida.
+* Surgical changes: tocar apenas o necessario; nao "melhorar" codigo adjacente, nao refatorar o que nao esta quebrado, casar o estilo existente; remover apenas orfaos criados pela propria mudanca. Cada linha alterada rastreia ao pedido.
+* Goal-driven execution: transformar a task em criterio verificavel antes de codar (ex.: escrever teste que reproduz o bug e faze-lo passar).
+
+Ciclo Execute por task:
+
+1. Listar os passos atomicos inline. Se a listagem revelar >5 passos ou dependencias complexas, parar: a fase Tasks foi pulada errado, devolver ao PM Agent para criar `tasks.md`.
+2. Implementar a task derivando os testes dos criterios de aceite da spec (`REQ-NNN`), nunca espelhando a implementacao.
+3. Rodar o gate: a task so e concluida quando os testes passam. Quem decide e o test runner, nao auto-avaliacao.
+4. Preparar um commit atomico por task (escopo e mensagem isolados). Nunca agrupar tasks num so commit; nunca enfraquecer, pular ou apagar testes para passar. A execucao do commit segue a politica do repositorio (commit sob solicitacao humana, ver `AD-003`).
+5. Registrar Task ID, `REQ` atendidos e resultado do gate no implementation report.
+
 ## Entradas esperadas
 
 * Agent dispatch do PM Agent.
 * Task brief ou `task.md`.
+* `.specs/features/<feature>/spec.md` (e `design.md`/`tasks.md` quando existirem).
 * `docs/ROADMAP.md`.
 * `docs/ARCHITECTURE.md`.
 * `docs/TECHNICAL_DOC.md`.

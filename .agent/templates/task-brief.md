@@ -12,6 +12,13 @@ TBD
 
 TBD
 
+## Spec / TLC
+
+* Feature: TBD
+* Spec: `.specs/features/<feature>/spec.md`
+* Sizing: Small / Medium / Large / Complex
+* Requisitos cobertos (REQ-NNN): TBD
+
 ## Jira Tracking
 
 * Epic key: TBD
@@ -53,7 +60,9 @@ TBD
 
 ## Criterios de aceite
 
-* [ ] TBD
+Cada criterio referencia um REQ da spec e deve ser verificavel pelo gate de testes.
+
+* [ ] (REQ-00X) TBD
 
 ## Arquivos esperados
 
