@@ -1,5 +1,9 @@
 import type { CanvasPoint } from "../selection/selectionUtils";
-import type { LocalDrawElement } from "./elementTypes";
+import type {
+  EllipseElement,
+  LocalDrawElement,
+  RectangleElement,
+} from "./elementTypes";
 
 export const ARROWHEAD_MARKER_ID = "localdraw-arrowhead";
 
@@ -104,4 +108,56 @@ export function boundsToEllipseCenter(bounds: Bounds) {
     rx: bounds.width / 2,
     ry: bounds.height / 2,
   };
+}
+
+export function elementCenter(bounds: Bounds): { x: number; y: number } {
+  const { cx, cy } = boundsToEllipseCenter(bounds);
+  return { x: cx, y: cy };
+}
+
+export function isPointInRectangle(
+  px: number,
+  py: number,
+  rect: RectangleElement,
+): boolean {
+  return (
+    px >= rect.x &&
+    px <= rect.x + rect.width &&
+    py >= rect.y &&
+    py <= rect.y + rect.height
+  );
+}
+
+export function isPointInEllipse(
+  px: number,
+  py: number,
+  ellipse: EllipseElement,
+): boolean {
+  const { cx, cy, rx, ry } = boundsToEllipseCenter(ellipse);
+
+  if (rx === 0 || ry === 0) {
+    return false;
+  }
+
+  const dx = (px - cx) / rx;
+  const dy = (py - cy) / ry;
+
+  return dx * dx + dy * dy <= 1;
+}
+
+export function isPointInShape(
+  px: number,
+  py: number,
+  element: RectangleElement | EllipseElement,
+): boolean {
+  switch (element.type) {
+    case "rectangle":
+      return isPointInRectangle(px, py, element);
+    case "ellipse":
+      return isPointInEllipse(px, py, element);
+    default: {
+      const _exhaustive: never = element;
+      return _exhaustive;
+    }
+  }
 }

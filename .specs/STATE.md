@@ -12,11 +12,10 @@ Memoria persistente do projeto para o fluxo spec-driven (TLC) integrado a orques
 
 ## Handoff
 
-* In-flight feature: Nenhuma (batch 003 concluido)
-* Fase atual: Fases 4–6 concluidas (elipse, texto, seta)
-* Proximo passo sugerido: Fase 7 — Resize e edicao basica
-* Bloqueios: Jira card transitions nao executadas (MCP CallMcpTool indisponivel nesta sessao)
-* Decisoes pendentes de humano: Nenhuma
+* In-flight feature: technical-doc (batch mvp-batch-005-techdoc)
+* Fase atual: 16 concluida (AB-19, AB-20, AB-21 done); main inclui batch 003 (fases 4–6: elipse, texto, seta)
+* Proximo passo sugerido: AB-22 (Fase 17) — aguardando decisao humana sobre provider LLM, dependencia e chaves API
+* Bloqueios: AB-22 parada obrigatoria (servico externo/dependencia nova)
+* Decisoes pendentes de humano: Provider LLM (OpenAI/Anthropic/local), dependencia npm, gestao de chaves, backend proxy vs client-side
 * Ultima atualizacao: 2026-06-28
-* Branch: `feat/mvp-batch-003-tools`
-* Commits: b787ed5 (AB-9), 2897f50 (AB-10), 2c1da8e (AB-11)
+* Branch: `feat/mvp-batch-005-techdoc`

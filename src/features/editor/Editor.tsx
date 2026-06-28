@@ -1,10 +1,10 @@
-import { useReducer } from "react";
 import { EditorCanvas } from "./EditorCanvas";
+import { useEditorDispatch, useEditorState } from "./EditorContext";
 import { EditorToolbar } from "./EditorToolbar";
-import { editorReducer, initialEditorState } from "./editorReducer";
 
 export function Editor() {
-  const [state, dispatch] = useReducer(editorReducer, initialEditorState);
+  const state = useEditorState();
+  const dispatch = useEditorDispatch();
 
   return (
     <section className="editor-shell" aria-label="Drawing editor">
