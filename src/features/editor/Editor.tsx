@@ -1,15 +1,11 @@
-import type { Dispatch } from "react";
 import { EditorCanvas } from "./EditorCanvas";
+import { useEditorDispatch, useEditorState } from "./EditorContext";
 import { EditorToolbar } from "./EditorToolbar";
-import type { EditorAction } from "./editorActions";
-import type { EditorState } from "./editorTypes";
 
-type EditorProps = {
-  state: EditorState;
-  dispatch: Dispatch<EditorAction>;
-};
+export function Editor() {
+  const state = useEditorState();
+  const dispatch = useEditorDispatch();
 
-export function Editor({ state, dispatch }: EditorProps) {
   return (
     <section className="editor-shell" aria-label="Drawing editor">
       <EditorToolbar

@@ -1,30 +1,52 @@
 import {
   createContext,
   useContext,
+  useMemo,
+  useReducer,
+  type Dispatch,
   type ReactNode,
 } from "react";
-import type { LocalDrawElement } from "../elements/elementTypes";
+import type { EditorAction } from "./editorActions";
+import { editorReducer, initialEditorState } from "./editorReducer";
+import type { EditorState } from "./editorTypes";
 
 type EditorContextValue = {
-  elements: LocalDrawElement[];
+  state: EditorState;
+  dispatch: Dispatch<EditorAction>;
 };
 
 const EditorContext = createContext<EditorContextValue | null>(null);
 
 type EditorProviderProps = {
-  elements: LocalDrawElement[];
   children: ReactNode;
 };
 
-export function EditorProvider({ elements, children }: EditorProviderProps) {
+export function EditorProvider({ children }: EditorProviderProps) {
+  const [state, dispatch] = useReducer(editorReducer, initialEditorState);
+  const value = useMemo(() => ({ state, dispatch }), [state]);
+
   return (
-    <EditorContext.Provider value={{ elements }}>
-      {children}
-    </EditorContext.Provider>
+    <EditorContext.Provider value={value}>{children}</EditorContext.Provider>
   );
 }
 
-export function useEditorElements(): LocalDrawElement[] {
+function useEditorContext(): EditorContextValue {
   const context = useContext(EditorContext);
-  return context?.elements ?? [];
+  if (!context) {
+    throw new Error("Editor hooks must be used within EditorProvider");
+  }
+
+  return context;
+}
+
+export function useEditorState(): EditorState {
+  return useEditorContext().state;
+}
+
+export function useEditorDispatch(): Dispatch<EditorAction> {
+  return useEditorContext().dispatch;
+}
+
+export function useEditorElements() {
+  return useEditorState().elements;
 }

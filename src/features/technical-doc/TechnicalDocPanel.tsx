@@ -1,9 +1,17 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useEditorElements } from "../editor/EditorContext";
+import {
+  AnalysisPreview,
+  AnalysisPreviewTabs,
+  MarkdownExportActions,
+} from "./TechnicalDocPanelParts";
 import { parseDiagram } from "./diagramParser";
 import { buildTechnicalDocInput } from "./technicalDocContext";
-import { generateTechnicalDocLocal } from "./technicalDocService";
-import type { ParsedDiagram } from "./technicalDocTypes";
+import {
+  elementsSignature,
+  generateTechnicalDoc,
+} from "./technicalDocService";
+import type { TechnicalDocAnalysis } from "./technicalDocTypes";
 
 const DEFAULT_DOC_OPTIONS = {
   outputLanguage: "pt-BR",
@@ -14,28 +22,39 @@ type PreviewTab = "json" | "markdown";
 
 export function TechnicalDocPanel() {
   const elements = useEditorElements();
-  const [parsedDiagram, setParsedDiagram] = useState<ParsedDiagram | null>(
-    null,
-  );
+  const [analysis, setAnalysis] = useState<TechnicalDocAnalysis | null>(null);
   const [previewTab, setPreviewTab] = useState<PreviewTab>("markdown");
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">(
     "idle",
   );
 
-  const markdown = useMemo(() => {
-    if (!parsedDiagram) {
-      return "";
+  const currentSignature = elementsSignature(elements);
+
+  useEffect(() => {
+    if (analysis && analysis.elementsSignature !== currentSignature) {
+      setAnalysis(null);
+      setCopyStatus("idle");
     }
+  }, [analysis, currentSignature]);
 
-    const input = buildTechnicalDocInput(parsedDiagram, DEFAULT_DOC_OPTIONS);
-    return generateTechnicalDocLocal(input).markdown;
-  }, [parsedDiagram]);
+  const handleAnalyze = async () => {
+    const parsed = parseDiagram(elements);
+    const input = buildTechnicalDocInput(parsed, DEFAULT_DOC_OPTIONS);
+    const output = await generateTechnicalDoc(input, "local");
 
-  const handleAnalyze = () => {
-    setParsedDiagram(parseDiagram(elements));
+    setAnalysis({
+      input,
+      output,
+      elementsSignature: currentSignature,
+    });
     setPreviewTab("markdown");
     setCopyStatus("idle");
   };
+
+  const markdown = analysis?.output.markdown ?? "";
+  const parsedJson = analysis
+    ? JSON.stringify(analysis.input.diagram, null, 2)
+    : "";
 
   const handleCopy = async () => {
     if (!markdown) {
@@ -77,87 +96,37 @@ export function TechnicalDocPanel() {
         </li>
         <li>
           <strong>Open questions</strong>
-          {parsedDiagram?.openQuestions.length ?? 0}
+          {analysis?.output.openQuestions.length ?? 0}
         </li>
       </ul>
       <button
         type="button"
         className="analyze-diagram-button"
-        onClick={handleAnalyze}
+        onClick={() => {
+          void handleAnalyze();
+        }}
       >
         Analyze Diagram
       </button>
-      {parsedDiagram ? (
+      {analysis ? (
         <>
-          <div
-            className="technical-doc-preview-tabs"
-            role="tablist"
-            aria-label="Analysis preview tabs"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={previewTab === "json"}
-              className={
-                previewTab === "json"
-                  ? "preview-tab preview-tab-active"
-                  : "preview-tab"
-              }
-              onClick={() => setPreviewTab("json")}
-            >
-              JSON
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={previewTab === "markdown"}
-              className={
-                previewTab === "markdown"
-                  ? "preview-tab preview-tab-active"
-                  : "preview-tab"
-              }
-              onClick={() => setPreviewTab("markdown")}
-            >
-              Markdown
-            </button>
-          </div>
-          <div className="technical-doc-actions">
-            <button
-              type="button"
-              className="technical-doc-action-button"
-              onClick={handleCopy}
-              disabled={!markdown}
-            >
-              {copyStatus === "copied"
-                ? "Copied"
-                : copyStatus === "error"
-                  ? "Copy failed"
-                  : "Copy Markdown"}
-            </button>
-            <button
-              type="button"
-              className="technical-doc-action-button"
-              onClick={handleDownload}
-              disabled={!markdown}
-            >
-              Download .md
-            </button>
-          </div>
-          {previewTab === "json" ? (
-            <pre
-              className="parsed-diagram-json"
-              aria-label="Parsed diagram JSON preview"
-            >
-              {JSON.stringify(parsedDiagram, null, 2)}
-            </pre>
-          ) : (
-            <pre
-              className="technical-doc-markdown-preview"
-              aria-label="Technical doc Markdown preview"
-            >
-              {markdown}
-            </pre>
-          )}
+          <AnalysisPreviewTabs
+            previewTab={previewTab}
+            onSelectTab={setPreviewTab}
+          />
+          <MarkdownExportActions
+            markdown={markdown}
+            copyStatus={copyStatus}
+            onCopy={() => {
+              void handleCopy();
+            }}
+            onDownload={handleDownload}
+          />
+          <AnalysisPreview
+            previewTab={previewTab}
+            parsedJson={parsedJson}
+            markdown={markdown}
+          />
         </>
       ) : (
         <p className="empty-note">

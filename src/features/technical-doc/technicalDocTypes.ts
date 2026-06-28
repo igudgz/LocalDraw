@@ -50,6 +50,7 @@ export type TechnicalDocInput = {
   userContext?: string;
   outputLanguage: TechnicalDocOutputLanguage;
   docStyle: TechnicalDocStyle;
+  promptVersion: string;
 };
 
 export type TechnicalDocOutput = {
@@ -57,3 +58,11 @@ export type TechnicalDocOutput = {
   assumptions: string[];
   openQuestions: string[];
 };
+
+export type TechnicalDocAnalysis = {
+  input: TechnicalDocInput;
+  output: TechnicalDocOutput;
+  elementsSignature: string;
+};
+
+export type TechnicalDocGenerationMode = "local" | "ai";

@@ -1,39 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type { LocalDrawElement } from "../elements/elementTypes";
-import { buildTechnicalDocInput } from "./technicalDocContext";
+import {
+  TECHNICAL_DOC_PROMPT_VERSION,
+  buildTechnicalDocInput,
+} from "./technicalDocContext";
 import { parseDiagram } from "./diagramParser";
-import type { ParsedDiagram } from "./technicalDocTypes";
+import { rectangle } from "./testFixtures";
 
-const baseElement = {
-  x: 0,
-  y: 0,
-  width: 120,
-  height: 80,
-  rotation: 0,
-  strokeColor: "#18202c",
-  backgroundColor: "#ffffff",
-  strokeWidth: 2,
-  opacity: 1,
-  createdAt: "2026-06-28T00:00:00.000Z",
-  updatedAt: "2026-06-28T00:00:00.000Z",
-};
-
-function rectangle(
-  id: string,
-  overrides: Partial<LocalDrawElement & { text?: string }> = {},
-): LocalDrawElement {
-  return {
-    ...baseElement,
-    id,
-    type: "rectangle",
-    ...overrides,
-  } as LocalDrawElement;
-}
-
-function sampleParsedDiagram(): ParsedDiagram {
-  return parseDiagram([
-    rectangle("rect-api", { text: "Order API" }),
-  ]);
+function sampleParsedDiagram() {
+  return parseDiagram([rectangle("rect-api", { text: "Order API" })]);
 }
 
 describe("buildTechnicalDocInput", () => {
@@ -47,6 +21,7 @@ describe("buildTechnicalDocInput", () => {
     expect(input.diagram).toBe(parsed);
     expect(input.outputLanguage).toBe("pt-BR");
     expect(input.docStyle).toBe("detailed");
+    expect(input.promptVersion).toBe(TECHNICAL_DOC_PROMPT_VERSION);
     expect(input.userContext).toBeUndefined();
   });
 

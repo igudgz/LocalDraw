@@ -1,74 +1,31 @@
 import { describe, expect, it } from "vitest";
-import type { LocalDrawElement } from "../elements/elementTypes";
 import { buildTechnicalDocInput } from "./technicalDocContext";
 import { parseDiagram } from "./diagramParser";
 import { generateMarkdown } from "./markdownGenerator";
 import {
-  aiTechnicalDocGeneratorStub,
-  generateTechnicalDocLocal,
+  arrow,
+  diagramElements,
+  ellipse,
+  rectangle,
+} from "./testFixtures";
+import {
+  elementsSignature,
+  generateTechnicalDoc,
 } from "./technicalDocService";
 import type { ParsedDiagram } from "./technicalDocTypes";
 
-const baseElement = {
-  x: 0,
-  y: 0,
-  width: 120,
-  height: 80,
-  rotation: 0,
-  strokeColor: "#18202c",
-  backgroundColor: "#ffffff",
-  strokeWidth: 2,
-  opacity: 1,
-  createdAt: "2026-06-28T00:00:00.000Z",
-  updatedAt: "2026-06-28T00:00:00.000Z",
-};
-
-function rectangle(
-  id: string,
-  overrides: Partial<LocalDrawElement & { text?: string }> = {},
-): LocalDrawElement {
-  return {
-    ...baseElement,
-    id,
-    type: "rectangle",
-    ...overrides,
-  } as LocalDrawElement;
-}
-
-function ellipse(
-  id: string,
-  overrides: Partial<LocalDrawElement & { text?: string }> = {},
-): LocalDrawElement {
-  return {
-    ...baseElement,
-    id,
-    type: "ellipse",
-    ...overrides,
-  } as LocalDrawElement;
-}
-
-function arrow(
-  id: string,
-  overrides: Partial<LocalDrawElement> = {},
-): LocalDrawElement {
-  return {
-    ...baseElement,
-    id,
-    type: "arrow",
-    ...overrides,
-  } as LocalDrawElement;
-}
-
 function sampleParsedDiagram(): ParsedDiagram {
-  return parseDiagram([
-    rectangle("rect-api", { text: "Order API" }),
-    ellipse("ellipse-user", { text: "End User" }),
-    arrow("arrow-1", {
-      label: "HTTP",
-      startBindingId: "ellipse-user",
-      endBindingId: "rect-api",
-    }),
-  ]);
+  return parseDiagram(
+    diagramElements(
+      rectangle("rect-api", { text: "Order API" }),
+      ellipse("ellipse-user", { text: "End User" }),
+      arrow("arrow-1", {
+        label: "HTTP",
+        startBindingId: "ellipse-user",
+        endBindingId: "rect-api",
+      }),
+    ),
+  );
 }
 
 function buildInput(parsed: ParsedDiagram) {
@@ -78,19 +35,20 @@ function buildInput(parsed: ParsedDiagram) {
   });
 }
 
-describe("generateTechnicalDocLocal", () => {
-  it("REQ-018: generates TechnicalDocOutput without external calls", () => {
+describe("generateTechnicalDoc", () => {
+  it("REQ-018: generates TechnicalDocOutput without external calls", async () => {
     const parsed = sampleParsedDiagram();
-    const output = generateTechnicalDocLocal(buildInput(parsed));
+    const input = buildInput(parsed);
+    const output = await generateTechnicalDoc(input, "local");
 
     expect(typeof output.markdown).toBe("string");
     expect(output.markdown.length).toBeGreaterThan(0);
-    expect(output.markdown).toBe(generateMarkdown(parsed));
+    expect(output.markdown).toBe(generateMarkdown(input));
   });
 
-  it("REQ-018: maps assumptions and openQuestions from diagram", () => {
+  it("REQ-018: maps assumptions and openQuestions from diagram", async () => {
     const parsed = sampleParsedDiagram();
-    const output = generateTechnicalDocLocal(buildInput(parsed));
+    const output = await generateTechnicalDoc(buildInput(parsed), "local");
 
     expect(output.assumptions).toEqual(parsed.assumptions);
     expect(output.openQuestions).toEqual(parsed.openQuestions);
@@ -98,21 +56,32 @@ describe("generateTechnicalDocLocal", () => {
     expect(output.openQuestions).not.toBe(parsed.openQuestions);
   });
 
-  it("REQ-019: local fallback returns markdown usable offline", () => {
-    const parsed = sampleParsedDiagram();
-    const output = generateTechnicalDocLocal(buildInput(parsed));
+  it("REQ-019: local fallback returns markdown usable offline", async () => {
+    const output = await generateTechnicalDoc(
+      buildInput(sampleParsedDiagram()),
+      "local",
+    );
 
     expect(output.markdown.startsWith("# Technical Doc")).toBe(true);
     expect(output.markdown).toContain("## Contexto");
   });
+
+  it("REQ-018: AI mode rejects without calling external APIs", async () => {
+    await expect(
+      generateTechnicalDoc(buildInput(sampleParsedDiagram()), "ai"),
+    ).rejects.toThrow("AB-22 blocked");
+  });
 });
 
-describe("TechnicalDocGenerator stub", () => {
-  it("REQ-018: AI stub rejects without calling external APIs", async () => {
-    const parsed = sampleParsedDiagram();
+describe("elementsSignature", () => {
+  it("changes when element updatedAt changes", () => {
+    const first = elementsSignature([
+      rectangle("rect-1", { updatedAt: "2026-06-28T00:00:00.000Z" }),
+    ]);
+    const second = elementsSignature([
+      rectangle("rect-1", { updatedAt: "2026-06-28T01:00:00.000Z" }),
+    ]);
 
-    await expect(
-      aiTechnicalDocGeneratorStub.generate(buildInput(parsed)),
-    ).rejects.toThrow("AB-22 blocked");
+    expect(first).not.toBe(second);
   });
 });
