@@ -171,6 +171,25 @@ button {
   pointer-events: none;
 }
 
+.editor-viewport.is-select-tool .editor-surface {
+  cursor: default;
+}
+
+.editor-viewport.is-rectangle-tool .editor-surface {
+  cursor: crosshair;
+}
+
+.rectangle-preview {
+  pointer-events: none;
+}
+
+.selection-box {
+  fill: none;
+  stroke: #2563eb;
+  stroke-width: 2;
+  pointer-events: none;
+}
+
 .canvas-empty-state {
   fill: #667085;
   font-size: 14px;

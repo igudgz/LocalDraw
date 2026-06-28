@@ -7,6 +7,7 @@ type ArrowElementProps = {
 export function ArrowElement({ element }: ArrowElementProps) {
   return (
     <line
+      data-element-id={element.id}
       x1={element.startX}
       y1={element.startY}
       x2={element.endX}
