@@ -84,6 +84,35 @@ button {
   text-transform: uppercase;
 }
 
+.analyze-diagram-button {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  color: #ffffff;
+  background: #2563eb;
+  cursor: pointer;
+}
+
+.analyze-diagram-button:hover {
+  background: #1d4ed8;
+}
+
+.parsed-diagram-json {
+  margin: 0;
+  max-height: min(60vh, 520px);
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid #d8dee8;
+  border-radius: 6px;
+  color: #344054;
+  background: #f8fafc;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .editor-shell {
   display: grid;
   min-width: 0;

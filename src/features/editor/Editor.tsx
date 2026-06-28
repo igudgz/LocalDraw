@@ -1,11 +1,15 @@
-import { useReducer } from "react";
+import type { Dispatch } from "react";
 import { EditorCanvas } from "./EditorCanvas";
 import { EditorToolbar } from "./EditorToolbar";
-import { editorReducer, initialEditorState } from "./editorReducer";
+import type { EditorAction } from "./editorActions";
+import type { EditorState } from "./editorTypes";
 
-export function Editor() {
-  const [state, dispatch] = useReducer(editorReducer, initialEditorState);
+type EditorProps = {
+  state: EditorState;
+  dispatch: Dispatch<EditorAction>;
+};
 
+export function Editor({ state, dispatch }: EditorProps) {
   return (
     <section className="editor-shell" aria-label="Drawing editor">
       <EditorToolbar
