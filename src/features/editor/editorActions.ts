@@ -31,4 +31,21 @@ export type EditorAction =
   | {
       type: "add-element";
       element: LocalDrawElement;
+    }
+  | {
+      type: "restore-drawing";
+      drawing: {
+        id: string;
+        name: string;
+        elements: LocalDrawElement[];
+        viewport: {
+          zoom: number;
+          scrollX: number;
+          scrollY: number;
+        };
+        metadata: {
+          createdAt: string;
+          updatedAt: string;
+        };
+      };
     };

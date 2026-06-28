@@ -18,13 +18,16 @@ Regras:
 | AD-001 | 2026-06-28 | Adotar TLC spec-driven como metodologia interna das fases, mantendo o modelo de papeis PM-driven como loop externo. | Capturar auto-sizing, rastreabilidade e Verifier independente sem descartar a orquestracao por papeis existente. | Active | `.agent/ORCHESTRATION.md` |
 | AD-002 | 2026-06-28 | Spec artifacts vivem em `.specs/`; evidencia de execucao em batch continua em `.agent/runs/`. | Evitar estrutura duplicada e manter compatibilidade com os templates de relatorio existentes. | Active | `.agent/ORCHESTRATION.md` |
 | AD-003 | 2026-06-28 | Commit atomico por task e disciplina obrigatoria, mas a execucao do commit segue a politica do repositorio (commit sob solicitacao humana). | Reconciliar TLC (1 commit por task) com a regra de so commitar quando solicitado. | Active | `.agent/roles/implementation-agent.md` |
+| AD-004 | 2026-06-28 | Persistencia IndexedDB: DB `localdraw`, store `drawings`, autosave debounce 800ms, viewport sem showGrid no arquivo. | Gray areas AB-15; formato .localdraw congelado. | Active | `.specs/features/persistence/context.md` |
 
 ## Handoff
 
-* In-flight feature: Nenhuma
-* Fase atual: Fase 3 concluida (retangulo)
-* Proximo passo sugerido: MVP-BATCH-003 — Fase 4 elipse (Jira AB-9)
+* In-flight feature: persistence (AB-15)
+* Fase atual: Fase 10 — Persistencia local
+* Proximo passo sugerido: Implementation Agent AB-15
 * Bloqueios: Nenhum
-* Decisoes pendentes de humano: Revisao final do batch MVP-BATCH-002; commits sob solicitacao
+* Decisoes pendentes de humano: Nenhuma
 * Ultima atualizacao: 2026-06-28
-* Batch concluido: MVP-BATCH-002 (`LD-003-selection` AB-7, `LD-004-rectangle` AB-8)
+* Batch: mvp-batch-004-persistence (Onda 1, Trilha B)
+* Worktree: C:\Users\igor2\Documents\Playground\LocalDraw-persist
+* Branch: feat/mvp-batch-004-persistence
