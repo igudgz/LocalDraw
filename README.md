@@ -4,9 +4,29 @@ LocalDraw is a local-first diagram editor planned from scratch, inspired by the 
 
 ## Current Status
 
-This repository currently contains product, architecture, roadmap, QA, and agent orchestration documentation.
+This repository contains product, architecture, roadmap, QA, agent orchestration documentation, and the initial React/Vite/TypeScript bootstrap.
 
-Application implementation has not started yet.
+The current application scope is limited to the Phase 0 base layout and initial serializable editor state.
+
+## Running Locally
+
+Install dependencies:
+
+```sh
+npm install
+```
+
+Start the development server:
+
+```sh
+npm run dev
+```
+
+Build the application:
+
+```sh
+npm run build
+```
 
 ## Core Constraints
 
