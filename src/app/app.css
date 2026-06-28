@@ -98,7 +98,8 @@ button {
   background: #1d4ed8;
 }
 
-.parsed-diagram-json {
+.parsed-diagram-json,
+.technical-doc-markdown-preview {
   margin: 0;
   max-height: min(60vh, 520px);
   overflow: auto;
@@ -111,6 +112,52 @@ button {
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.technical-doc-preview-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.preview-tab {
+  flex: 1;
+  min-height: 36px;
+  border: 1px solid #c8d0dc;
+  border-radius: 6px;
+  color: #344054;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.preview-tab-active {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.technical-doc-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.technical-doc-action-button {
+  flex: 1;
+  min-height: 36px;
+  border: 1px solid #c8d0dc;
+  border-radius: 6px;
+  color: #344054;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.technical-doc-action-button:hover:not(:disabled) {
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.technical-doc-action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .editor-shell {
