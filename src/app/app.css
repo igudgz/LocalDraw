@@ -109,6 +109,19 @@ button {
   gap: 8px;
 }
 
+.export-group {
+  flex-wrap: wrap;
+}
+
+.import-file-input {
+  display: none;
+}
+
+.import-error {
+  color: #b42318;
+  font-size: 12px;
+}
+
 .tool-button {
   min-width: 44px;
   height: 36px;

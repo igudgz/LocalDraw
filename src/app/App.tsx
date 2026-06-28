@@ -32,7 +32,12 @@ export function App() {
         onRenameDrawing={projects.renameDrawing}
         onUpdateMetadata={projects.updateDrawingMetadata}
       />
-      <Editor state={state} dispatch={dispatch} />
+      <Editor
+        dispatch={dispatch}
+        flushSave={flushSave}
+        refreshSummaries={projects.refreshSummaries}
+        state={state}
+      />
       <TechnicalDocPanel />
     </main>
   );

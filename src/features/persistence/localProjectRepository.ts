@@ -7,7 +7,8 @@ import {
   putDrawingRecord,
   type DrawingDbRecord,
 } from "../../shared/storage/indexedDb";
-import { serializeDrawingRecord } from "./localDrawSerializer";
+import { deserializeLocalDrawFile, serializeDrawingRecord } from "./localDrawSerializer";
+import type { LocalDrawFile } from "./localDrawSerializer";
 
 export type { DrawingDbRecord };
 
@@ -136,6 +137,12 @@ export async function createDrawing(
   return record;
 }
 
+export async function importDrawing(file: LocalDrawFile): Promise<DrawingDbRecord> {
+  const record = deserializeLocalDrawFile(crypto.randomUUID(), file);
+  await save(record);
+  return record;
+}
+
 export async function duplicateDrawing(
   id: string,
 ): Promise<DrawingDbRecord | null> {
@@ -214,6 +221,7 @@ export type LocalProjectRepository = {
   deleteDrawing: typeof deleteDrawing;
   loadActiveDrawing: typeof loadActiveDrawing;
   createDrawing: typeof createDrawing;
+  importDrawing: typeof importDrawing;
   duplicateDrawing: typeof duplicateDrawing;
   updateMetadata: typeof updateMetadata;
   setActiveDrawingId: typeof setActiveDrawingId;
@@ -227,6 +235,7 @@ export const localProjectRepository: LocalProjectRepository = {
   deleteDrawing,
   loadActiveDrawing,
   createDrawing,
+  importDrawing,
   duplicateDrawing,
   updateMetadata,
   setActiveDrawingId,

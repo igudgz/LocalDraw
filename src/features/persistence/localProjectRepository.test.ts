@@ -8,11 +8,13 @@ import {
   deleteDrawing,
   duplicateDrawing,
   getById,
+  importDrawing,
   listSummaries,
   loadActiveDrawing,
   save,
   updateMetadata,
 } from "./localProjectRepository";
+import { serializeDrawingRecord } from "./localDrawSerializer";
 
 const ACTIVE_DRAWING_STORAGE_KEY = "localdraw:activeDrawingId";
 
@@ -190,5 +192,23 @@ describe("localProjectRepository", () => {
       tags: ["updated"],
       elements: sampleRecord.elements,
     });
+  });
+
+  it("imports a drawing as a new record without deleting existing ones (REQ-006)", async () => {
+    await save(sampleRecord);
+
+    const imported = await importDrawing(
+      serializeDrawingRecord({
+        ...sampleRecord,
+        id: "ignored-export-id",
+        name: "Imported drawing",
+      }),
+    );
+
+    expect(imported.id).not.toBe(sampleRecord.id);
+    expect(imported.name).toBe("Imported drawing");
+    expect(await getById(sampleRecord.id)).toEqual(sampleRecord);
+    expect(await getById(imported.id)).toEqual(imported);
+    expect(await listSummaries()).toHaveLength(2);
   });
 });
