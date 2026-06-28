@@ -2,15 +2,6 @@
 
 Memoria persistente do projeto para o fluxo spec-driven (TLC) integrado a orquestracao PM-driven.
 
-Este arquivo guarda dois blocos: o log de decisoes de arquitetura/produto e o snapshot de handoff entre sessoes/agentes.
-
-Regras:
-
-* O PM Agent e o dono deste arquivo. Outros agentes propoem entradas via relatorio; o PM Agent consolida.
-* Decisoes recebem ID incremental `AD-NNN` e nunca sao apagadas, apenas marcadas como `Superseded by AD-XXX`.
-* O handoff e sobrescrito a cada pausa/retomada para refletir o estado em voo.
-* Nao inventar decisoes. Se algo nao foi decidido, nao registrar.
-
 ## Decisions (AD-NNN)
 
 | ID | Data | Decisao | Contexto / Motivo | Status | Referencia |
@@ -21,10 +12,11 @@ Regras:
 
 ## Handoff
 
-* In-flight feature: Nenhuma
-* Fase atual: Fase 3 concluida (retangulo)
-* Proximo passo sugerido: MVP-BATCH-003 — Fase 4 elipse (Jira AB-9)
-* Bloqueios: Nenhum
-* Decisoes pendentes de humano: Revisao final do batch MVP-BATCH-002; commits sob solicitacao
+* In-flight feature: Nenhuma (batch 003 concluido)
+* Fase atual: Fases 4–6 concluidas (elipse, texto, seta)
+* Proximo passo sugerido: Fase 7 — Resize e edicao basica
+* Bloqueios: Jira card transitions nao executadas (MCP CallMcpTool indisponivel nesta sessao)
+* Decisoes pendentes de humano: Nenhuma
 * Ultima atualizacao: 2026-06-28
-* Batch concluido: MVP-BATCH-002 (`LD-003-selection` AB-7, `LD-004-rectangle` AB-8)
+* Branch: `feat/mvp-batch-003-tools`
+* Commits: b787ed5 (AB-9), 2897f50 (AB-10), 2c1da8e (AB-11)
