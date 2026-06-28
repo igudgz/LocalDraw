@@ -179,7 +179,15 @@ button {
   cursor: crosshair;
 }
 
+.editor-viewport.is-ellipse-tool .editor-surface {
+  cursor: crosshair;
+}
+
 .rectangle-preview {
+  pointer-events: none;
+}
+
+.ellipse-preview {
   pointer-events: none;
 }
 

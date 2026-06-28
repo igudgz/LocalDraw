@@ -9,6 +9,15 @@ import {
   type SelectDragSession,
 } from "../tools/selectTool";
 import {
+  createEllipseDrawSession,
+  createEllipseElement,
+  ellipseToolId,
+  getEllipsePreviewBounds,
+  shouldCommitEllipse,
+  type EllipseDrawSession,
+  type NormalizedEllipseBounds,
+} from "../tools/ellipseTool";
+import {
   createRectangleDrawSession,
   createRectangleElement,
   getRectanglePreviewBounds,
@@ -77,6 +86,7 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
   const panSessionRef = useRef<PanSession | null>(null);
   const selectSessionRef = useRef<SelectDragSession | null>(null);
   const rectangleSessionRef = useRef<RectangleDrawSession | null>(null);
+  const ellipseSessionRef = useRef<EllipseDrawSession | null>(null);
   const [viewportSize, setViewportSize] = useState<ViewportSize>(
     DEFAULT_VIEWPORT_SIZE,
   );
@@ -84,6 +94,9 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
     null,
   );
   const [rectanglePreview, setRectanglePreview] = useState<NormalizedRect | null>(
+    null,
+  );
+  const [ellipsePreview, setEllipsePreview] = useState<NormalizedEllipseBounds | null>(
     null,
   );
   const [isPanning, setIsPanning] = useState(false);
@@ -208,6 +221,22 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
       return;
     }
 
+    if (state.activeTool === ellipseToolId) {
+      const canvasPoint = getCanvasPoint(event);
+
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      ellipseSessionRef.current = createEllipseDrawSession(
+        event.pointerId,
+        canvasPoint,
+      );
+      setEllipsePreview(getEllipsePreviewBounds(
+        ellipseSessionRef.current,
+        canvasPoint,
+      ));
+      return;
+    }
+
     if (state.activeTool !== selectToolId) {
       return;
     }
@@ -284,13 +313,23 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
 
     const rectangleSession = rectangleSessionRef.current;
 
-    if (!rectangleSession || rectangleSession.pointerId !== event.pointerId) {
+    if (rectangleSession && rectangleSession.pointerId === event.pointerId) {
+      event.preventDefault();
+      setRectanglePreview(
+        getRectanglePreviewBounds(rectangleSession, getCanvasPoint(event)),
+      );
+      return;
+    }
+
+    const ellipseSession = ellipseSessionRef.current;
+
+    if (!ellipseSession || ellipseSession.pointerId !== event.pointerId) {
       return;
     }
 
     event.preventDefault();
-    setRectanglePreview(
-      getRectanglePreviewBounds(rectangleSession, getCanvasPoint(event)),
+    setEllipsePreview(
+      getEllipsePreviewBounds(ellipseSession, getCanvasPoint(event)),
     );
   };
 
@@ -343,10 +382,38 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
     }
   };
 
+  const stopEllipseDraw = (event: PointerEvent<SVGSVGElement>) => {
+    const ellipseSession = ellipseSessionRef.current;
+
+    if (!ellipseSession || ellipseSession.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const bounds = getEllipsePreviewBounds(
+      ellipseSession,
+      getCanvasPoint(event),
+    );
+
+    ellipseSessionRef.current = null;
+    setEllipsePreview(null);
+
+    if (shouldCommitEllipse(bounds)) {
+      const element = createEllipseElement(bounds, state.styleDefaults);
+
+      dispatch({ type: "add-element", element });
+      dispatch({ type: "set-selection", elementId: element.id });
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
   const handlePointerUp = (event: PointerEvent<SVGSVGElement>) => {
     stopPan(event);
     stopSelectDrag(event);
     stopRectangleDraw(event);
+    stopEllipseDraw(event);
   };
 
   const handlePointerLeave = () => {
@@ -362,7 +429,7 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
 
   return (
     <div
-      className={`editor-viewport ${isPanning ? "is-panning" : ""} ${state.activeTool === selectToolId ? "is-select-tool" : ""} ${state.activeTool === rectangleToolId ? "is-rectangle-tool" : ""}`}
+      className={`editor-viewport ${isPanning ? "is-panning" : ""} ${state.activeTool === selectToolId ? "is-select-tool" : ""} ${state.activeTool === rectangleToolId ? "is-rectangle-tool" : ""} ${state.activeTool === ellipseToolId ? "is-ellipse-tool" : ""}`}
       aria-label="Editor viewport"
     >
       <svg
@@ -413,6 +480,21 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
             y={rectanglePreview.y}
             width={rectanglePreview.width}
             height={rectanglePreview.height}
+            fill={state.styleDefaults.backgroundColor}
+            opacity={state.styleDefaults.opacity}
+            stroke={state.styleDefaults.strokeColor}
+            strokeWidth={state.styleDefaults.strokeWidth}
+            strokeDasharray="6 4"
+            pointerEvents="none"
+          />
+        ) : null}
+        {ellipsePreview ? (
+          <ellipse
+            className="ellipse-preview"
+            cx={ellipsePreview.x + ellipsePreview.width / 2}
+            cy={ellipsePreview.y + ellipsePreview.height / 2}
+            rx={ellipsePreview.width / 2}
+            ry={ellipsePreview.height / 2}
             fill={state.styleDefaults.backgroundColor}
             opacity={state.styleDefaults.opacity}
             stroke={state.styleDefaults.strokeColor}
