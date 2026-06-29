@@ -43,6 +43,7 @@ import type { EditorTool } from "./editorTypes";
 import type { Dispatch, PointerEvent, WheelEvent } from "react";
 import type { EditorAction } from "./editorActions";
 import type { EditorState } from "./editorTypes";
+import { useEditorSession } from "./EditorContext";
 
 const CANVAS_WIDTH = 4000;
 const CANVAS_HEIGHT = 3000;
@@ -122,6 +123,7 @@ function clearSessionIfActive<T extends { pointerId: number }>(
 }
 
 export function EditorViewport({ dispatch, state }: EditorViewportProps) {
+  const { setInlineEditActive } = useEditorSession();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const panSessionRef = useRef<PanSession | null>(null);
   const selectSessionRef = useRef<SelectDragSession | null>(null);
@@ -144,6 +146,10 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
 
   const isEditingInline =
     editingTextId !== null || editingArrowLabelId !== null;
+
+  useEffect(() => {
+    setInlineEditActive(isEditingInline);
+  }, [isEditingInline, setInlineEditActive]);
 
   useEffect(() => {
     const svg = svgRef.current;

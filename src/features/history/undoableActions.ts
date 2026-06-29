@@ -13,6 +13,7 @@ import type { EditorAction } from "../editor/editorActions";
  */
 export const UNDOABLE_ACTION_TYPES = [
   "add-element",
+  "delete-element",
   "update-element",
   "update-element-label",
   "update-element-text",

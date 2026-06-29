@@ -53,6 +53,10 @@ export type EditorAction =
       element: LocalDrawElement;
     }
   | {
+      type: "delete-element";
+      elementId: string;
+    }
+  | {
       type: "restore-drawing";
       drawing: {
         id: string;

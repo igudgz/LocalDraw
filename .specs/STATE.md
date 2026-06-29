@@ -13,10 +13,10 @@ Memoria persistente do projeto para o fluxo spec-driven (TLC) integrado a orques
 
 ## Handoff
 
-* In-flight feature: AB-14 undo/redo — PR `feat/mvp-batch-007-history` → main
-* Fase atual: Fase 9 (undo/redo) concluida neste batch; main inclui Fases 0–8
-* Proximo passo sugerido: AB-18 (Fase 13 atalhos) ou persistencia/organizacao conforme roadmap
-* Bloqueios: AB-22 (Fase 17) — aguardando decisao humana sobre provider LLM
-* Decisoes pendentes de humano: Provider LLM; validacao manual de atalhos undo/redo no browser (opcional)
+* In-flight feature: AB-18 atalhos — PR `feat/mvp-batch-008-shortcuts` → main
+* Fase atual: Fase 13 concluída; **último batch do MVP core**
+* Proximo passo sugerido: merge PR AB-18; fases pós-MVP (parser AB-19, etc.)
+* Bloqueios: AB-22 (Fase 17) — provider LLM
+* Decisoes pendentes de humano: Provider LLM
 * Ultima atualizacao: 2026-06-28
-* Batch concluido: mvp-batch-007-history (AB-14)
+* Batch concluido: mvp-batch-008-shortcuts (AB-18)
