@@ -13,10 +13,10 @@ Memoria persistente do projeto para o fluxo spec-driven (TLC) integrado a orques
 
 ## Handoff
 
-* In-flight feature: merge batch 004 (persistence) + batch 005 (techdoc) em `feat/mvp-batch-004-persistence`
-* Fase atual: Fase 12 (persistencia/export) + Fase 16 (technical doc) integradas via `EditorContext`
-* Proximo passo sugerido: AB-22 (Fase 17) — aguardando decisao humana sobre provider LLM; ou Fase 13 atalhos
-* Bloqueios: AB-22 parada obrigatoria (servico externo/dependencia nova)
-* Decisoes pendentes de humano: Provider LLM, dependencia npm, gestao de chaves; E2E manual batch 004
+* In-flight feature: AB-12 (Fase 7 resize) em `feat/mvp-batch-005-resize` / worktree LocalDraw-resize
+* Fase atual: Fase 7 — Resize e edicao basica
+* Proximo passo sugerido: AB-13 (estilos, outro worktree) ou AB-14 (undo/redo)
+* Bloqueios: nenhum para AB-12
+* Decisoes pendentes de humano: AB-22 provider LLM (batch techdoc)
 * Ultima atualizacao: 2026-06-28
-* Batch concluido: mvp-batch-004-persistence (AB-15, AB-16, AB-17); main inclui mvp-batch-005-techdoc (AB-19–21)
+* Batch concluido: mvp-batch-004-persistence (AB-15–17); main inclui mvp-batch-005-techdoc (AB-19–21)

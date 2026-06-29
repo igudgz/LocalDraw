@@ -68,6 +68,13 @@ export function editorReducer(
             : element,
         ),
       };
+    case "resize-element":
+      return {
+        ...state,
+        elements: state.elements.map((element) =>
+          element.id === action.elementId ? action.element : element,
+        ),
+      };
     case "update-element-label":
       return {
         ...state,

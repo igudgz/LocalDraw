@@ -1,3 +1,4 @@
+import type { MutableRefObject } from "react";
 import { useEffect, useRef, useState } from "react";
 import {
   DrawPreviewOverlay,
@@ -27,6 +28,12 @@ import {
   selectToolId,
   type SelectDragSession,
 } from "../tools/selectTool";
+import {
+  createResizeSession,
+  getResizedElement,
+  type ResizeSession,
+} from "../tools/resizeTool";
+import type { ResizeHandleId } from "../elements/elementGeometry";
 import {
   createTextElement,
   DEFAULT_TEXT,
@@ -100,10 +107,25 @@ function releasePointerCapture(
   }
 }
 
+function clearSessionIfActive<T extends { pointerId: number }>(
+  sessionRef: MutableRefObject<T | null>,
+  pointerId: number,
+): T | null {
+  const session = sessionRef.current;
+
+  if (!session || session.pointerId !== pointerId) {
+    return null;
+  }
+
+  sessionRef.current = null;
+  return session;
+}
+
 export function EditorViewport({ dispatch, state }: EditorViewportProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const panSessionRef = useRef<PanSession | null>(null);
   const selectSessionRef = useRef<SelectDragSession | null>(null);
+  const resizeSessionRef = useRef<ResizeSession | null>(null);
   const drawSessionRef = useRef<DragDrawSession | null>(null);
   const [viewportSize, setViewportSize] = useState<ViewportSize>(
     DEFAULT_VIEWPORT_SIZE,
@@ -119,6 +141,9 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
     null,
   );
   const [draftArrowLabel, setDraftArrowLabel] = useState("");
+
+  const isEditingInline =
+    editingTextId !== null || editingArrowLabelId !== null;
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -322,6 +347,35 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
     );
   };
 
+  const handleResizeHandlePointerDown = (
+    handle: ResizeHandleId,
+    event: PointerEvent<SVGCircleElement>,
+  ) => {
+    const selectedId = state.selectedElementIds[0];
+    const element =
+      selectedId === undefined
+        ? undefined
+        : findElementById(state.elements, selectedId);
+
+    if (
+      state.activeTool !== selectToolId ||
+      !element ||
+      isEditingInline
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    svgRef.current?.setPointerCapture(event.pointerId);
+    dispatch({ type: "set-interaction", interaction: "dragging" });
+    resizeSessionRef.current = createResizeSession(
+      event.pointerId,
+      element.id,
+      handle,
+    );
+  };
+
   const handlePointerMove = (event: PointerEvent<SVGSVGElement>) => {
     setPointerPosition(getCanvasPoint(event));
 
@@ -365,6 +419,25 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
       return;
     }
 
+    const resizeSession = resizeSessionRef.current;
+
+    if (resizeSession && resizeSession.pointerId === event.pointerId) {
+      event.preventDefault();
+      const canvasPoint = getCanvasPoint(event);
+      const element = findElementById(state.elements, resizeSession.elementId);
+
+      if (!element) {
+        return;
+      }
+
+      dispatch({
+        type: "resize-element",
+        elementId: resizeSession.elementId,
+        element: getResizedElement(resizeSession, element, canvasPoint),
+      });
+      return;
+    }
+
     const drawSession = drawSessionRef.current;
 
     if (drawSession && drawSession.pointerId === event.pointerId) {
@@ -374,39 +447,53 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
   };
 
   const stopPan = (event: PointerEvent<SVGSVGElement>) => {
-    const panSession = panSessionRef.current;
+    const panSession = clearSessionIfActive(panSessionRef, event.pointerId);
 
-    if (!panSession || panSession.pointerId !== event.pointerId) {
+    if (!panSession) {
       return;
     }
 
-    panSessionRef.current = null;
     setIsPanning(false);
     releasePointerCapture(event, event.pointerId);
   };
 
   const stopSelectDrag = (event: PointerEvent<SVGSVGElement>) => {
-    const selectSession = selectSessionRef.current;
+    const selectSession = clearSessionIfActive(
+      selectSessionRef,
+      event.pointerId,
+    );
 
-    if (!selectSession || selectSession.pointerId !== event.pointerId) {
+    if (!selectSession) {
       return;
     }
 
-    selectSessionRef.current = null;
+    dispatch({ type: "set-interaction", interaction: "idle" });
+    releasePointerCapture(event, event.pointerId);
+  };
+
+  const stopResize = (event: PointerEvent<SVGSVGElement>) => {
+    const resizeSession = clearSessionIfActive(
+      resizeSessionRef,
+      event.pointerId,
+    );
+
+    if (!resizeSession) {
+      return;
+    }
+
     dispatch({ type: "set-interaction", interaction: "idle" });
     releasePointerCapture(event, event.pointerId);
   };
 
   const stopDraw = (event: PointerEvent<SVGSVGElement>) => {
-    const drawSession = drawSessionRef.current;
+    const drawSession = clearSessionIfActive(drawSessionRef, event.pointerId);
 
-    if (!drawSession || drawSession.pointerId !== event.pointerId) {
+    if (!drawSession) {
       return;
     }
 
     const preview = getDrawPreview(drawSession, getCanvasPoint(event));
 
-    drawSessionRef.current = null;
     setDrawPreview(null);
 
     if (shouldCommitDrawPreview(preview)) {
@@ -430,6 +517,7 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
   const handlePointerUp = (event: PointerEvent<SVGSVGElement>) => {
     stopPan(event);
     stopSelectDrag(event);
+    stopResize(event);
     stopDraw(event);
   };
 
@@ -440,11 +528,7 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
   };
 
   const handleDoubleClick = (event: PointerEvent<SVGSVGElement>) => {
-    if (
-      state.activeTool !== selectToolId ||
-      editingTextId !== null ||
-      editingArrowLabelId !== null
-    ) {
+    if (state.activeTool !== selectToolId || isEditingInline) {
       return;
     }
 
@@ -544,10 +628,11 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
             styleDefaults={state.styleDefaults}
           />
         ) : null}
-        {selectedElement &&
-        editingTextId !== selectedElement.id &&
-        editingArrowLabelId !== selectedElement.id ? (
-          <SelectionBox element={selectedElement} />
+        {selectedElement && !isEditingInline ? (
+          <SelectionBox
+            element={selectedElement}
+            onHandlePointerDown={handleResizeHandlePointerDown}
+          />
         ) : null}
         {state.elements.length === 0 ? (
           <text className="canvas-empty-state" x="600" y="400" textAnchor="middle">

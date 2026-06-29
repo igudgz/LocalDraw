@@ -25,6 +25,11 @@ export type EditorAction =
       y: number;
     }
   | {
+      type: "resize-element";
+      elementId: string;
+      element: LocalDrawElement;
+    }
+  | {
       type: "update-element-label";
       elementId: string;
       label: string;
