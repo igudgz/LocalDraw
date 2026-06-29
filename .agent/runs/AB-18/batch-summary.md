@@ -1,4 +1,4 @@
-# Batch Summary — AB-18
+# Batch Summary — AB-18 (completo)
 
 ## Batch ID
 
@@ -6,60 +6,57 @@ mvp-batch-008-shortcuts
 
 ## Objective
 
-Fase 13: Atalhos de teclado (Jira AB-18) — último batch do MVP core.
+Fase 13: Atalhos de teclado (Jira AB-18) — **último batch do MVP core**.
 
 ## Tasks Completed
 
 * AB-18 — Atalhos de teclado
 
-## Final Status
+## Agents Dispatched
 
-| Task ID | Status | Notes |
-|---------|--------|-------|
-| AB-18 | Done | All gates pass |
+| Agente | Dispatch | Report |
+|--------|----------|--------|
+| Implementation | `dispatch-implementation.md` | `implementation-report.md` |
+| Review | `dispatch-review.md` | `review-report.md` |
+| QA | `dispatch-qa.md` | `qa-report.md` |
+| Metrics | `dispatch-metrics.md` | `token-report.md` |
 
-## Jira Tracking
+## Artefatos TLC
 
-* Cloud ID: `8809a9be-c136-479d-bfc7-f490774b58ab`
-* Project: AB
-* Epic: AB-4
-* Task: AB-18
-
-## Jira Card Movement
-
-| Task | Key | Start | Final | Transitions |
-|------|-----|-------|-------|-------------|
-| AB-18 | AB-18 | Ready for development | Concluído | 21 → In development, 2 → Review, 31 → Concluído |
-
-## Main Files Changed
-
-* `src/features/editor/useEditorKeyboardShortcuts.ts`
-* `src/features/editor/keyboardShortcutLogic.ts`
-* `src/features/editor/keyboardShortcuts.test.ts`
-* `src/features/editor/Editor.tsx`
-* `src/features/editor/EditorContext.tsx`
-* `src/features/editor/EditorViewport.tsx`
-* `src/features/editor/editorActions.ts`
-* `src/features/editor/editorReducer.ts`
-* `src/features/editor/editorReducer.test.ts`
-* `src/features/history/undoableActions.ts`
+* `task.md`
 * `.specs/features/keyboard-shortcuts/spec.md`
 * `.specs/features/keyboard-shortcuts/validation.md`
 
-## Checks
+## Jira AB-18
 
-* Build: PASS
-* Lint: Nao configurado separadamente
-* Tests: PASS (106/106)
+* Transicoes: 21 (In development) → 2 (Review) → 31 (Concluído)
+* [AB-18](https://igu-dgz-board.atlassian.net/browse/AB-18)
 
-## Sizing
+## PR
 
-Medium — spec breve, design inline, tasks implícitas.
+* [#10](https://github.com/igudgz/LocalDraw/pull/10) — **MERGED**
 
-## Human Review Required
+## Checks Executed
 
-Final PR review only.
+| Check | Resultado |
+|-------|-----------|
+| `npm install` | PASS |
+| `npm run dev -- --port 5176 --strictPort` | PASS (HTTP 200) |
+| `npm run build` | PASS |
+| `npm test` | 106/106 PASS |
+| E2E smoke Playwright | PASS |
+| Playwright MCP | Nao disponivel (fallback script) |
 
-## Next Recommended Batch
+## Evidencia adicional (completude prompt)
 
-MVP core complete. Próximas fases pós-MVP: parser (AB-19+), LLM decision (AB-22).
+* `dev-server-evidence.md`
+* `e2e-evidence.md`
+* `smoke-keyboard-shortcuts.mjs` + screenshot
+
+## Human Review
+
+PR mergeado. Batch encerrado.
+
+## Next
+
+MVP core completo. Fases pós-MVP: parser (AB-19+), LLM (AB-22 TBD).
