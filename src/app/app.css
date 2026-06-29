@@ -324,6 +324,28 @@ button {
   pointer-events: none;
 }
 
+.resize-handle {
+  fill: #ffffff;
+  stroke: #2563eb;
+  stroke-width: 2;
+  cursor: nwse-resize;
+}
+
+.resize-handle-nw,
+.resize-handle-se {
+  cursor: nwse-resize;
+}
+
+.resize-handle-ne,
+.resize-handle-sw {
+  cursor: nesw-resize;
+}
+
+.resize-handle-start,
+.resize-handle-end {
+  cursor: grab;
+}
+
 .canvas-empty-state {
   fill: #667085;
   font-size: 14px;

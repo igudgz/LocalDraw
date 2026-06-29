@@ -1,11 +1,28 @@
 import type { CanvasPoint } from "../selection/selectionUtils";
 import type {
+  ArrowElement,
   EllipseElement,
   LocalDrawElement,
   RectangleElement,
+  TextElement,
 } from "./elementTypes";
 
 export const ARROWHEAD_MARKER_ID = "localdraw-arrowhead";
+export const MIN_ELEMENT_SIZE = 1;
+
+export type ResizeHandleId =
+  | "nw"
+  | "ne"
+  | "sw"
+  | "se"
+  | "start"
+  | "end";
+
+export type ResizeHandle = {
+  id: ResizeHandleId;
+  x: number;
+  y: number;
+};
 
 export type Bounds = {
   x: number;
@@ -28,6 +45,166 @@ export function normalizeBoundsFromDrag(
   const height = Math.abs(endPoint.y - startPoint.y);
 
   return { x, y, width, height };
+}
+
+export function enforceMinBounds(bounds: Bounds, minSize = MIN_ELEMENT_SIZE): Bounds {
+  return {
+    x: bounds.x,
+    y: bounds.y,
+    width: Math.max(minSize, bounds.width),
+    height: Math.max(minSize, bounds.height),
+  };
+}
+
+function getOppositeCorner(bounds: Bounds, handle: ResizeHandleId): CanvasPoint {
+  switch (handle) {
+    case "nw":
+      return { x: bounds.x + bounds.width, y: bounds.y + bounds.height };
+    case "ne":
+      return { x: bounds.x, y: bounds.y + bounds.height };
+    case "sw":
+      return { x: bounds.x + bounds.width, y: bounds.y };
+    case "se":
+      return { x: bounds.x, y: bounds.y };
+    case "start":
+    case "end":
+      throw new Error(`Corner handle expected, got ${handle}`);
+    default: {
+      const _exhaustive: never = handle;
+      return _exhaustive;
+    }
+  }
+}
+
+function resizeBoundsFromCornerHandle(
+  bounds: Bounds,
+  handle: ResizeHandleId,
+  pointerPoint: CanvasPoint,
+): Bounds {
+  const anchor = getOppositeCorner(bounds, handle);
+  return enforceMinBounds(normalizeBoundsFromDrag(anchor, pointerPoint));
+}
+
+function boundsFromArrowEndpoints(
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+): Pick<ArrowElement, "x" | "y" | "width" | "height"> {
+  const bounds = normalizeBoundsFromDrag(
+    { x: startX, y: startY },
+    { x: endX, y: endY },
+  );
+
+  return enforceMinBounds(bounds);
+}
+
+export function getResizeHandles(element: LocalDrawElement): ResizeHandle[] {
+  switch (element.type) {
+    case "rectangle":
+    case "ellipse":
+    case "text": {
+      const bounds = getElementBounds(element);
+
+      return [
+        { id: "nw", x: bounds.x, y: bounds.y },
+        { id: "ne", x: bounds.x + bounds.width, y: bounds.y },
+        { id: "sw", x: bounds.x, y: bounds.y + bounds.height },
+        { id: "se", x: bounds.x + bounds.width, y: bounds.y + bounds.height },
+      ];
+    }
+    case "arrow":
+      return [
+        { id: "start", x: element.startX, y: element.startY },
+        { id: "end", x: element.endX, y: element.endY },
+      ];
+    default: {
+      const _exhaustive: never = element;
+      return _exhaustive;
+    }
+  }
+}
+
+export function resizeElement(
+  element: LocalDrawElement,
+  handle: ResizeHandleId,
+  pointerPoint: CanvasPoint,
+): LocalDrawElement {
+  const updatedAt = new Date().toISOString();
+
+  switch (element.type) {
+    case "rectangle":
+    case "ellipse": {
+      const bounds = resizeBoundsFromCornerHandle(
+        getElementBounds(element),
+        handle,
+        pointerPoint,
+      );
+
+      return {
+        ...element,
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+        updatedAt,
+      };
+    }
+    case "text": {
+      const bounds = resizeBoundsFromCornerHandle(
+        getElementBounds(element),
+        handle,
+        pointerPoint,
+      );
+
+      return applyTextBounds(element, bounds, updatedAt);
+    }
+    case "arrow": {
+      const startPoint =
+        handle === "start"
+          ? pointerPoint
+          : { x: element.startX, y: element.startY };
+      const endPoint =
+        handle === "end"
+          ? pointerPoint
+          : { x: element.endX, y: element.endY };
+      const box = boundsFromArrowEndpoints(
+        startPoint.x,
+        startPoint.y,
+        endPoint.x,
+        endPoint.y,
+      );
+
+      return {
+        ...element,
+        ...box,
+        startX: startPoint.x,
+        startY: startPoint.y,
+        endX: endPoint.x,
+        endY: endPoint.y,
+        updatedAt,
+      };
+    }
+    default: {
+      const _exhaustive: never = element;
+      return _exhaustive;
+    }
+  }
+}
+
+function applyTextBounds(
+  element: TextElement,
+  bounds: Bounds,
+  updatedAt: string,
+): TextElement {
+  return {
+    ...element,
+    x: bounds.x,
+    y: bounds.y + bounds.height,
+    width: bounds.width,
+    height: bounds.height,
+    updatedAt,
+  };
 }
 
 export function estimateTextBounds(

@@ -2,6 +2,7 @@ import type { EditorAction } from "./editorActions";
 import type { EditorState } from "./editorTypes";
 import {
   estimateTextBounds,
+  resizeElement,
   translateElementTo,
 } from "../elements/elementGeometry";
 
@@ -65,6 +66,18 @@ export function editorReducer(
         elements: state.elements.map((element) =>
           element.id === action.elementId
             ? translateElementTo(element, action.x, action.y)
+            : element,
+        ),
+      };
+    case "resize-element":
+      return {
+        ...state,
+        elements: state.elements.map((element) =>
+          element.id === action.elementId
+            ? resizeElement(element, action.handle, {
+                x: action.pointerX,
+                y: action.pointerY,
+              })
             : element,
         ),
       };

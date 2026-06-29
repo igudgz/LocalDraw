@@ -1,4 +1,5 @@
 import type { LocalDrawElement } from "../elements/elementTypes";
+import type { ResizeHandleId } from "../elements/elementGeometry";
 import type {
   EditorInteraction,
   EditorTool,
@@ -23,6 +24,13 @@ export type EditorAction =
       elementId: string;
       x: number;
       y: number;
+    }
+  | {
+      type: "resize-element";
+      elementId: string;
+      handle: ResizeHandleId;
+      pointerX: number;
+      pointerY: number;
     }
   | {
       type: "update-element-label";

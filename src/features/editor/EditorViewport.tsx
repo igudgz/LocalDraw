@@ -28,6 +28,11 @@ import {
   type SelectDragSession,
 } from "../tools/selectTool";
 import {
+  createResizeSession,
+  type ResizeSession,
+} from "../tools/resizeTool";
+import type { ResizeHandleId } from "../elements/elementGeometry";
+import {
   createTextElement,
   DEFAULT_TEXT,
   textToolId,
@@ -104,6 +109,7 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const panSessionRef = useRef<PanSession | null>(null);
   const selectSessionRef = useRef<SelectDragSession | null>(null);
+  const resizeSessionRef = useRef<ResizeSession | null>(null);
   const drawSessionRef = useRef<DragDrawSession | null>(null);
   const [viewportSize, setViewportSize] = useState<ViewportSize>(
     DEFAULT_VIEWPORT_SIZE,
@@ -322,6 +328,36 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
     );
   };
 
+  const handleResizeHandlePointerDown = (
+    handle: ResizeHandleId,
+    event: PointerEvent<SVGCircleElement>,
+  ) => {
+    const selectedId = state.selectedElementIds[0];
+    const element =
+      selectedId === undefined
+        ? undefined
+        : findElementById(state.elements, selectedId);
+
+    if (
+      state.activeTool !== selectToolId ||
+      !element ||
+      editingTextId !== null ||
+      editingArrowLabelId !== null
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.ownerSVGElement?.setPointerCapture(event.pointerId);
+    dispatch({ type: "set-interaction", interaction: "dragging" });
+    resizeSessionRef.current = createResizeSession(
+      event.pointerId,
+      element.id,
+      handle,
+    );
+  };
+
   const handlePointerMove = (event: PointerEvent<SVGSVGElement>) => {
     setPointerPosition(getCanvasPoint(event));
 
@@ -365,6 +401,22 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
       return;
     }
 
+    const resizeSession = resizeSessionRef.current;
+
+    if (resizeSession && resizeSession.pointerId === event.pointerId) {
+      event.preventDefault();
+      const canvasPoint = getCanvasPoint(event);
+
+      dispatch({
+        type: "resize-element",
+        elementId: resizeSession.elementId,
+        handle: resizeSession.handle,
+        pointerX: canvasPoint.x,
+        pointerY: canvasPoint.y,
+      });
+      return;
+    }
+
     const drawSession = drawSessionRef.current;
 
     if (drawSession && drawSession.pointerId === event.pointerId) {
@@ -393,6 +445,18 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
     }
 
     selectSessionRef.current = null;
+    dispatch({ type: "set-interaction", interaction: "idle" });
+    releasePointerCapture(event, event.pointerId);
+  };
+
+  const stopResize = (event: PointerEvent<SVGSVGElement>) => {
+    const resizeSession = resizeSessionRef.current;
+
+    if (!resizeSession || resizeSession.pointerId !== event.pointerId) {
+      return;
+    }
+
+    resizeSessionRef.current = null;
     dispatch({ type: "set-interaction", interaction: "idle" });
     releasePointerCapture(event, event.pointerId);
   };
@@ -430,6 +494,7 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
   const handlePointerUp = (event: PointerEvent<SVGSVGElement>) => {
     stopPan(event);
     stopSelectDrag(event);
+    stopResize(event);
     stopDraw(event);
   };
 
@@ -547,7 +612,10 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
         {selectedElement &&
         editingTextId !== selectedElement.id &&
         editingArrowLabelId !== selectedElement.id ? (
-          <SelectionBox element={selectedElement} />
+          <SelectionBox
+            element={selectedElement}
+            onHandlePointerDown={handleResizeHandlePointerDown}
+          />
         ) : null}
         {state.elements.length === 0 ? (
           <text className="canvas-empty-state" x="600" y="400" textAnchor="middle">
