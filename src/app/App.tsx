@@ -1,16 +1,39 @@
 import { Editor } from "../features/editor/Editor";
-import { EditorProvider } from "../features/editor/EditorContext";
+import {
+  EditorProvider,
+  useEditorState,
+  useEditorSession,
+} from "../features/editor/EditorContext";
 import { ProjectPanel } from "../features/projects/ProjectPanel";
 import { TechnicalDocPanel } from "../features/technical-doc/TechnicalDocPanel";
+
+function AppShell() {
+  const state = useEditorState();
+  const { projects } = useEditorSession();
+
+  return (
+    <main className="app-shell" aria-label="LocalDraw editor">
+      <ProjectPanel
+        summaries={projects.summaries}
+        activeDrawingId={state.currentDrawing.id}
+        selectedDetail={projects.selectedDetail}
+        onSelectDrawing={projects.selectDrawing}
+        onCreateDrawing={projects.createNewDrawing}
+        onDuplicateDrawing={projects.duplicateDrawing}
+        onDeleteDrawing={projects.deleteDrawing}
+        onRenameDrawing={projects.renameDrawing}
+        onUpdateMetadata={projects.updateDrawingMetadata}
+      />
+      <Editor />
+      <TechnicalDocPanel />
+    </main>
+  );
+}
 
 export function App() {
   return (
     <EditorProvider>
-      <main className="app-shell" aria-label="LocalDraw editor">
-        <ProjectPanel />
-        <Editor />
-        <TechnicalDocPanel />
-      </main>
+      <AppShell />
     </EditorProvider>
   );
 }

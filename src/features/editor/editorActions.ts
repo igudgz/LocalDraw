@@ -30,6 +30,11 @@ export type EditorAction =
       label: string;
     }
   | {
+      type: "update-element-text";
+      elementId: string;
+      text: string;
+    }
+  | {
       type: "set-interaction";
       interaction: EditorInteraction;
     }
@@ -38,7 +43,24 @@ export type EditorAction =
       element: LocalDrawElement;
     }
   | {
-      type: "update-element-text";
-      elementId: string;
-      text: string;
+      type: "restore-drawing";
+      drawing: {
+        id: string;
+        name: string;
+        elements: LocalDrawElement[];
+        viewport: {
+          zoom: number;
+          scrollX: number;
+          scrollY: number;
+        };
+        metadata: {
+          createdAt: string;
+          updatedAt: string;
+        };
+      };
+    }
+  | {
+      type: "update-current-drawing";
+      name?: string;
+      updatedAt?: string;
     };

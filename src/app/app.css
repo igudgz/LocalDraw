@@ -185,6 +185,19 @@ button {
   gap: 8px;
 }
 
+.export-group {
+  flex-wrap: wrap;
+}
+
+.import-file-input {
+  display: none;
+}
+
+.import-error {
+  color: #b42318;
+  font-size: 12px;
+}
+
 .tool-button {
   min-width: 44px;
   height: 36px;
@@ -330,6 +343,136 @@ button {
   font-size: 12px;
   line-height: 1.2;
   pointer-events: none;
+}
+
+.project-list {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.project-list-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.project-action-button,
+.project-icon-button {
+  border: 1px solid #c8d0dc;
+  border-radius: 6px;
+  color: #344054;
+  background: #ffffff;
+  cursor: pointer;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.project-action-button {
+  width: 100%;
+}
+
+.project-list-items {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.project-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #e4e8ef;
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+
+.project-list-button {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  border: 0;
+  border-radius: 6px;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px;
+  text-align: left;
+}
+
+.project-list-button[aria-current="true"] {
+  background: #eef4ff;
+}
+
+.project-list-name {
+  color: #18202c;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.project-list-updated {
+  color: #667085;
+  font-size: 12px;
+}
+
+.project-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.project-icon-button-danger {
+  color: #b42318;
+}
+
+.project-rename-form {
+  width: 100%;
+}
+
+.project-rename-input,
+.project-input,
+.project-textarea {
+  width: 100%;
+  border: 1px solid #c8d0dc;
+  border-radius: 6px;
+  color: #18202c;
+  background: #ffffff;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.project-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e4e8ef;
+}
+
+.project-metadata h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.project-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 @media (max-width: 900px) {

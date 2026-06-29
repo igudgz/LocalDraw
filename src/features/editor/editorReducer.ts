@@ -1,6 +1,9 @@
 import type { EditorAction } from "./editorActions";
 import type { EditorState } from "./editorTypes";
-import { estimateTextBounds, translateElementTo } from "../elements/elementGeometry";
+import {
+  estimateTextBounds,
+  translateElementTo,
+} from "../elements/elementGeometry";
 
 export const initialEditorState: EditorState = {
   elements: [],
@@ -78,23 +81,6 @@ export function editorReducer(
             : element,
         ),
       };
-    case "set-interaction":
-      return {
-        ...state,
-        ui: {
-          ...state.ui,
-          interaction: action.interaction,
-        },
-      };
-    case "add-element":
-      return {
-        ...state,
-        elements: [...state.elements, action.element],
-        currentDrawing: {
-          ...state.currentDrawing,
-          updatedAt: new Date().toISOString(),
-        },
-      };
     case "update-element-text":
       return {
         ...state,
@@ -119,6 +105,58 @@ export function editorReducer(
         currentDrawing: {
           ...state.currentDrawing,
           updatedAt: new Date().toISOString(),
+        },
+      };
+    case "set-interaction":
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          interaction: action.interaction,
+        },
+      };
+    case "add-element":
+      return {
+        ...state,
+        elements: [...state.elements, action.element],
+        currentDrawing: {
+          ...state.currentDrawing,
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    case "restore-drawing":
+      return {
+        ...state,
+        elements: action.drawing.elements,
+        selectedElementIds: [],
+        activeTool: "select",
+        viewport: {
+          ...action.drawing.viewport,
+          showGrid: state.viewport.showGrid,
+        },
+        currentDrawing: {
+          id: action.drawing.id,
+          name: action.drawing.name,
+          createdAt: action.drawing.metadata.createdAt,
+          updatedAt: action.drawing.metadata.updatedAt,
+        },
+        history: {
+          past: [],
+          future: [],
+        },
+        ui: {
+          interaction: "idle",
+        },
+      };
+    case "update-current-drawing":
+      return {
+        ...state,
+        currentDrawing: {
+          ...state.currentDrawing,
+          ...(action.name !== undefined ? { name: action.name } : {}),
+          ...(action.updatedAt !== undefined
+            ? { updatedAt: action.updatedAt }
+            : {}),
         },
       };
     default: {
