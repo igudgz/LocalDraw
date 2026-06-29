@@ -31,6 +31,13 @@ Sensor completo automatizado: **Nao executado** (mutação manual parcial).
 
 * `npm run build`: PASS
 * `npm test`: 106 tests PASS (21 files)
+* `npm run dev --port 5176`: PASS (HTTP 200)
+* E2E smoke: PASS — `.agent/runs/AB-18/smoke-keyboard-shortcuts.mjs`
+
+## E2E
+
+* Playwright MCP: Nao disponivel (browser fechado)
+* Fallback Playwright script: PASS (R, V, Delete, Ctrl+Z, Esc, H)
 
 ## Diff range
 
