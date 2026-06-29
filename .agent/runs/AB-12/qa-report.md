@@ -18,10 +18,10 @@
 ## Ambiente
 
 * Sistema operacional: Windows 10 (win32 10.0.26200) / PowerShell
-* Navegador: Nao utilizado (validacao automatizada + inspecao de codigo)
-* Branch/commit: `feat/mvp-batch-005-resize` / `6311406`
+* Navegador: Playwright headless (`smoke-resize.mjs`) + Playwright MCP confirmado operacional
+* Branch/commit: `feat/mvp-batch-005-resize` / `7450c28`
 * Build/dev server: `npm run build`, `npm test`, `npm run lint` — todos passaram
-* Playwright MCP: Nao disponivel
+* Playwright MCP: Disponivel (verificado 2026-06-29)
 * Dados usados: fixtures em `elementGeometry.test.ts` e `editorReducer.test.ts` (rectangle, ellipse, arrow, text)
 
 ## Fluxos testados
@@ -56,7 +56,7 @@ Resultados permitidos: `Pass`, `Fail`, `Not tested`.
 ## Problemas de usabilidade
 
 * Nota (nao bloqueante): handles com raio 5px podem ser dificeis de acertar em zoom baixo (risco documentado no implementation-report).
-* Nota (nao bloqueante): validacao visual/interativa em browser nao executada nesta sessao (Playwright MCP indisponivel).
+* Nota (nao bloqueante): smoke E2E executado via Playwright headless; Playwright MCP confirmado operacional em follow-up.
 
 ## Regressoes possiveis
 
@@ -80,7 +80,7 @@ Nenhuma regressao automatizada detectada.
   * `npm test` — **Pass** (17 files, 76 tests, 0 failed, exit 0)
   * `npm test` detalhe AB-12: `elementGeometry.test.ts` 11 passed; `editorReducer.test.ts` 3 passed (incl. 2 resize)
   * `npm run lint` — **Pass** (`tsc -b --pretty false`, exit 0)
-* Evidencias Playwright MCP: Nao disponivel
+* Evidencias Playwright MCP: Disponivel; smoke E2E via script local + MCP navegacao confirmada
 * Prints/videos: Nenhum
 * Logs: Saidas de build/test/lint registradas neste relatorio
 * Arquivos relevantes:
@@ -105,7 +105,13 @@ Escolher um:
 
 **Verdict final: Approved with notes**
 
-Notas: REQ-001 e REQ-007 dependem de inspecao de codigo e testes unitarios de handles; smoke E2E em browser nao executado (Playwright MCP indisponivel). Gates automaticos e cobertura de REQ-002–006 e REQ-008 estao verdes.
+Notas: Smoke E2E executado em 2026-06-29 (`smoke-resize.mjs` via Playwright headless em `http://localhost:5199/`). REQ-001, REQ-007 e REQ-008 confirmados no browser. Porta 5173 servia worktree antigo sem resize; dev correto do worktree `LocalDraw-resize` em **5199**.
+
+## E2E smoke (follow-up)
+
+* Script: `.agent/runs/AB-12/smoke-resize.mjs`
+* Screenshot: `.agent/runs/AB-12/smoke-resize.png`
+* Resultado: **PASS** — DRAW_PASS, HANDLES_PASS (4), RESIZE_PASS, MOVE_AFTER_RESIZE_PASS
 
 ## Observacoes
 

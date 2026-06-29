@@ -1,3 +1,4 @@
+import type { MutableRefObject } from "react";
 import { useEffect, useRef, useState } from "react";
 import {
   DrawPreviewOverlay,
@@ -29,6 +30,7 @@ import {
 } from "../tools/selectTool";
 import {
   createResizeSession,
+  getResizedElement,
   type ResizeSession,
 } from "../tools/resizeTool";
 import type { ResizeHandleId } from "../elements/elementGeometry";
@@ -105,6 +107,20 @@ function releasePointerCapture(
   }
 }
 
+function clearSessionIfActive<T extends { pointerId: number }>(
+  sessionRef: MutableRefObject<T | null>,
+  pointerId: number,
+): T | null {
+  const session = sessionRef.current;
+
+  if (!session || session.pointerId !== pointerId) {
+    return null;
+  }
+
+  sessionRef.current = null;
+  return session;
+}
+
 export function EditorViewport({ dispatch, state }: EditorViewportProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const panSessionRef = useRef<PanSession | null>(null);
@@ -125,6 +141,9 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
     null,
   );
   const [draftArrowLabel, setDraftArrowLabel] = useState("");
+
+  const isEditingInline =
+    editingTextId !== null || editingArrowLabelId !== null;
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -341,15 +360,14 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
     if (
       state.activeTool !== selectToolId ||
       !element ||
-      editingTextId !== null ||
-      editingArrowLabelId !== null
+      isEditingInline
     ) {
       return;
     }
 
     event.preventDefault();
     event.stopPropagation();
-    event.currentTarget.ownerSVGElement?.setPointerCapture(event.pointerId);
+    svgRef.current?.setPointerCapture(event.pointerId);
     dispatch({ type: "set-interaction", interaction: "dragging" });
     resizeSessionRef.current = createResizeSession(
       event.pointerId,
@@ -406,13 +424,16 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
     if (resizeSession && resizeSession.pointerId === event.pointerId) {
       event.preventDefault();
       const canvasPoint = getCanvasPoint(event);
+      const element = findElementById(state.elements, resizeSession.elementId);
+
+      if (!element) {
+        return;
+      }
 
       dispatch({
         type: "resize-element",
         elementId: resizeSession.elementId,
-        handle: resizeSession.handle,
-        pointerX: canvasPoint.x,
-        pointerY: canvasPoint.y,
+        element: getResizedElement(resizeSession, element, canvasPoint),
       });
       return;
     }
@@ -426,51 +447,53 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
   };
 
   const stopPan = (event: PointerEvent<SVGSVGElement>) => {
-    const panSession = panSessionRef.current;
+    const panSession = clearSessionIfActive(panSessionRef, event.pointerId);
 
-    if (!panSession || panSession.pointerId !== event.pointerId) {
+    if (!panSession) {
       return;
     }
 
-    panSessionRef.current = null;
     setIsPanning(false);
     releasePointerCapture(event, event.pointerId);
   };
 
   const stopSelectDrag = (event: PointerEvent<SVGSVGElement>) => {
-    const selectSession = selectSessionRef.current;
+    const selectSession = clearSessionIfActive(
+      selectSessionRef,
+      event.pointerId,
+    );
 
-    if (!selectSession || selectSession.pointerId !== event.pointerId) {
+    if (!selectSession) {
       return;
     }
 
-    selectSessionRef.current = null;
     dispatch({ type: "set-interaction", interaction: "idle" });
     releasePointerCapture(event, event.pointerId);
   };
 
   const stopResize = (event: PointerEvent<SVGSVGElement>) => {
-    const resizeSession = resizeSessionRef.current;
+    const resizeSession = clearSessionIfActive(
+      resizeSessionRef,
+      event.pointerId,
+    );
 
-    if (!resizeSession || resizeSession.pointerId !== event.pointerId) {
+    if (!resizeSession) {
       return;
     }
 
-    resizeSessionRef.current = null;
     dispatch({ type: "set-interaction", interaction: "idle" });
     releasePointerCapture(event, event.pointerId);
   };
 
   const stopDraw = (event: PointerEvent<SVGSVGElement>) => {
-    const drawSession = drawSessionRef.current;
+    const drawSession = clearSessionIfActive(drawSessionRef, event.pointerId);
 
-    if (!drawSession || drawSession.pointerId !== event.pointerId) {
+    if (!drawSession) {
       return;
     }
 
     const preview = getDrawPreview(drawSession, getCanvasPoint(event));
 
-    drawSessionRef.current = null;
     setDrawPreview(null);
 
     if (shouldCommitDrawPreview(preview)) {
@@ -505,11 +528,7 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
   };
 
   const handleDoubleClick = (event: PointerEvent<SVGSVGElement>) => {
-    if (
-      state.activeTool !== selectToolId ||
-      editingTextId !== null ||
-      editingArrowLabelId !== null
-    ) {
+    if (state.activeTool !== selectToolId || isEditingInline) {
       return;
     }
 
@@ -609,9 +628,7 @@ export function EditorViewport({ dispatch, state }: EditorViewportProps) {
             styleDefaults={state.styleDefaults}
           />
         ) : null}
-        {selectedElement &&
-        editingTextId !== selectedElement.id &&
-        editingArrowLabelId !== selectedElement.id ? (
+        {selectedElement && !isEditingInline ? (
           <SelectionBox
             element={selectedElement}
             onHandlePointerDown={handleResizeHandlePointerDown}

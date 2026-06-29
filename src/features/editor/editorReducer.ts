@@ -2,7 +2,6 @@ import type { EditorAction } from "./editorActions";
 import type { EditorState } from "./editorTypes";
 import {
   estimateTextBounds,
-  resizeElement,
   translateElementTo,
 } from "../elements/elementGeometry";
 
@@ -73,12 +72,7 @@ export function editorReducer(
       return {
         ...state,
         elements: state.elements.map((element) =>
-          element.id === action.elementId
-            ? resizeElement(element, action.handle, {
-                x: action.pointerX,
-                y: action.pointerY,
-              })
-            : element,
+          element.id === action.elementId ? action.element : element,
         ),
       };
     case "update-element-label":

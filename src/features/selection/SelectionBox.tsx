@@ -6,12 +6,8 @@ import {
 } from "../elements/elementGeometry";
 import type { LocalDrawElement } from "../elements/elementTypes";
 
-export type { ResizeHandleId };
-export { getResizeHandles };
-
 const SELECTION_PADDING = 4;
 const HANDLE_RADIUS = 5;
-
 type SelectionBoxProps = {
   element: LocalDrawElement;
   onHandlePointerDown?: (

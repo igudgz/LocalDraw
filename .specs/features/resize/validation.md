@@ -25,7 +25,7 @@ AB-12
 | REQ-007 | Pointer nos handles | `stopPropagation` + sessao dedicada | Inspecao codigo | **PASS*** |
 | REQ-008 | Selecao e move apos resize | IDs preservados; move funciona | `editorReducer.test.ts` | **PASS** |
 
-\* REQ-007: PASS por inspecao; confirmacao browser recomendada.
+\* REQ-007: PASS — smoke E2E confirma handles + resize + move sem conflito (2026-06-29)
 
 ## Discrimination sensor (mutation)
 

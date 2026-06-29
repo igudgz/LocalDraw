@@ -1,4 +1,9 @@
-import type { ResizeHandleId } from "../elements/elementGeometry";
+import type { CanvasPoint } from "../selection/selectionUtils";
+import type { LocalDrawElement } from "../elements/elementTypes";
+import {
+  resizeElement,
+  type ResizeHandleId,
+} from "../elements/elementGeometry";
 
 export type ResizeSession = {
   pointerId: number;
@@ -16,4 +21,12 @@ export function createResizeSession(
     elementId,
     handle,
   };
+}
+
+export function getResizedElement(
+  session: ResizeSession,
+  element: LocalDrawElement,
+  pointerPoint: CanvasPoint,
+): LocalDrawElement {
+  return resizeElement(element, session.handle, pointerPoint);
 }

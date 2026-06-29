@@ -10,13 +10,9 @@ import type {
 export const ARROWHEAD_MARKER_ID = "localdraw-arrowhead";
 export const MIN_ELEMENT_SIZE = 1;
 
-export type ResizeHandleId =
-  | "nw"
-  | "ne"
-  | "sw"
-  | "se"
-  | "start"
-  | "end";
+export type CornerHandleId = "nw" | "ne" | "sw" | "se";
+export type ArrowHandleId = "start" | "end";
+export type ResizeHandleId = CornerHandleId | ArrowHandleId;
 
 export type ResizeHandle = {
   id: ResizeHandleId;
@@ -56,7 +52,15 @@ export function enforceMinBounds(bounds: Bounds, minSize = MIN_ELEMENT_SIZE): Bo
   };
 }
 
-function getOppositeCorner(bounds: Bounds, handle: ResizeHandleId): CanvasPoint {
+function isCornerHandle(handle: ResizeHandleId): handle is CornerHandleId {
+  return handle !== "start" && handle !== "end";
+}
+
+function isArrowHandle(handle: ResizeHandleId): handle is ArrowHandleId {
+  return handle === "start" || handle === "end";
+}
+
+function getOppositeCorner(bounds: Bounds, handle: CornerHandleId): CanvasPoint {
   switch (handle) {
     case "nw":
       return { x: bounds.x + bounds.width, y: bounds.y + bounds.height };
@@ -66,9 +70,6 @@ function getOppositeCorner(bounds: Bounds, handle: ResizeHandleId): CanvasPoint 
       return { x: bounds.x + bounds.width, y: bounds.y };
     case "se":
       return { x: bounds.x, y: bounds.y };
-    case "start":
-    case "end":
-      throw new Error(`Corner handle expected, got ${handle}`);
     default: {
       const _exhaustive: never = handle;
       return _exhaustive;
@@ -78,11 +79,26 @@ function getOppositeCorner(bounds: Bounds, handle: ResizeHandleId): CanvasPoint 
 
 function resizeBoundsFromCornerHandle(
   bounds: Bounds,
-  handle: ResizeHandleId,
+  handle: CornerHandleId,
   pointerPoint: CanvasPoint,
 ): Bounds {
   const anchor = getOppositeCorner(bounds, handle);
   return enforceMinBounds(normalizeBoundsFromDrag(anchor, pointerPoint));
+}
+
+function applyBoxBounds<T extends RectangleElement | EllipseElement>(
+  element: T,
+  bounds: Bounds,
+  updatedAt: string,
+): T {
+  return {
+    ...element,
+    x: bounds.x,
+    y: bounds.y,
+    width: bounds.width,
+    height: bounds.height,
+    updatedAt,
+  };
 }
 
 function boundsFromArrowEndpoints(
@@ -135,22 +151,23 @@ export function resizeElement(
   switch (element.type) {
     case "rectangle":
     case "ellipse": {
+      if (!isCornerHandle(handle)) {
+        return element;
+      }
+
       const bounds = resizeBoundsFromCornerHandle(
         getElementBounds(element),
         handle,
         pointerPoint,
       );
 
-      return {
-        ...element,
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width,
-        height: bounds.height,
-        updatedAt,
-      };
+      return applyBoxBounds(element, bounds, updatedAt);
     }
     case "text": {
+      if (!isCornerHandle(handle)) {
+        return element;
+      }
+
       const bounds = resizeBoundsFromCornerHandle(
         getElementBounds(element),
         handle,
@@ -160,6 +177,10 @@ export function resizeElement(
       return applyTextBounds(element, bounds, updatedAt);
     }
     case "arrow": {
+      if (!isArrowHandle(handle)) {
+        return element;
+      }
+
       const startPoint =
         handle === "start"
           ? pointerPoint

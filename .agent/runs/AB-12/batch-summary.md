@@ -98,7 +98,7 @@ Transições listadas antes de mover (getTransitionsForJiraIssue): Review (2), I
 
 ## Technical Debt Created
 
-* Teste E2E browser para handles (Playwright MCP indisponível nesta sessão)
+* Teste E2E browser: PASS via `smoke-resize.mjs`; Playwright MCP operacional para batches futuros
 
 ## Documentation Changes
 

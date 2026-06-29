@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { editorReducer, initialEditorState } from "../editor/editorReducer";
 import type { RectangleElement } from "../elements/elementTypes";
+import {
+  createResizeSession,
+  getResizedElement,
+} from "../tools/resizeTool";
 
 const rectangle: RectangleElement = {
   id: "rect-1",
@@ -56,6 +60,12 @@ describe("editorReducer restore-drawing", () => {
 
 describe("editorReducer resize-element (REQ-006, REQ-008)", () => {
   it("applies resizeElement and keeps the element selected", () => {
+    const session = createResizeSession(1, rectangle.id, "se");
+    const resizedElement = getResizedElement(session, rectangle, {
+      x: 250,
+      y: 180,
+    });
+
     const next = editorReducer(
       {
         ...initialEditorState,
@@ -65,9 +75,7 @@ describe("editorReducer resize-element (REQ-006, REQ-008)", () => {
       {
         type: "resize-element",
         elementId: rectangle.id,
-        handle: "se",
-        pointerX: 250,
-        pointerY: 180,
+        element: resizedElement,
       },
     );
 
@@ -82,6 +90,12 @@ describe("editorReducer resize-element (REQ-006, REQ-008)", () => {
   });
 
   it("still supports move after resize", () => {
+    const session = createResizeSession(1, rectangle.id, "se");
+    const resizedElement = getResizedElement(session, rectangle, {
+      x: 250,
+      y: 180,
+    });
+
     const resized = editorReducer(
       {
         ...initialEditorState,
@@ -91,9 +105,7 @@ describe("editorReducer resize-element (REQ-006, REQ-008)", () => {
       {
         type: "resize-element",
         elementId: rectangle.id,
-        handle: "se",
-        pointerX: 250,
-        pointerY: 180,
+        element: resizedElement,
       },
     );
 
