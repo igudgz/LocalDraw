@@ -73,4 +73,10 @@ export type EditorAction =
       type: "update-current-drawing";
       name?: string;
       updatedAt?: string;
+    }
+  | {
+      type: "undo";
+    }
+  | {
+      type: "redo";
     };

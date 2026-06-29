@@ -29,12 +29,7 @@ export type EditorHistoryState = {
   future: EditorStateSnapshot[];
 };
 
-export type EditorStateSnapshot = {
-  elements: LocalDrawElement[];
-  selectedElementIds: string[];
-  activeTool: EditorTool;
-  viewport: ViewportState;
-};
+export type EditorStateSnapshot = LocalDrawElement[];
 
 export type CurrentDrawingState = {
   id: string;

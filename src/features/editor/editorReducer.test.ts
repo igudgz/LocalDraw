@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { LocalDrawElement, RectangleElement } from "../elements/elementTypes";
 import { estimateTextBounds } from "../elements/elementGeometry";
+import { MAX_HISTORY } from "../history/historyReducer";
 import { editorReducer, initialEditorState } from "../editor/editorReducer";
 import {
   createResizeSession,
@@ -50,8 +51,8 @@ describe("editorReducer restore-drawing", () => {
         activeTool: "rectangle",
         selectedElementIds: ["rect-1"],
         history: {
-          past: [{ ...initialEditorState, elements: [] }],
-          future: [{ ...initialEditorState, elements: [] }],
+          past: [[rectangle]],
+          future: [[{ ...rectangle, x: 200 }]],
         },
         ui: { interaction: "dragging" },
       },
@@ -209,5 +210,134 @@ describe("editorReducer resize-element (REQ-006, REQ-008)", () => {
       width: 150,
       height: 100,
     });
+  });
+});
+
+describe("editorReducer undo/redo", () => {
+  it("undoes add-element by restoring the previous elements array", () => {
+    const added = editorReducer(initialEditorState, {
+      type: "add-element",
+      element: rectangle,
+    });
+
+    expect(added.elements).toHaveLength(1);
+    expect(added.history.past).toHaveLength(1);
+    expect(added.history.past[0]).toEqual([]);
+
+    const undone = editorReducer(added, { type: "undo" });
+
+    expect(undone.elements).toEqual([]);
+    expect(undone.history.past).toEqual([]);
+    expect(undone.history.future).toHaveLength(1);
+    expect(undone.history.future[0]).toEqual([rectangle]);
+  });
+
+  it("undoes update-element move and keeps selection unchanged", () => {
+    const state = {
+      ...initialEditorState,
+      elements: [rectangle],
+      selectedElementIds: [rectangle.id],
+    };
+
+    const moved = editorReducer(state, {
+      type: "update-element",
+      elementId: rectangle.id,
+      x: 140,
+      y: 120,
+    });
+
+    const undone = editorReducer(moved, { type: "undo" });
+
+    expect(undone.elements[0]).toMatchObject({ x: 100, y: 80 });
+    expect(undone.selectedElementIds).toEqual([rectangle.id]);
+  });
+
+  it("undoes update-element-style and redo restores the styled state", () => {
+    const state = {
+      ...initialEditorState,
+      elements: [rectangle],
+    };
+
+    const styled = editorReducer(state, {
+      type: "update-element-style",
+      elementId: rectangle.id,
+      strokeColor: "#ff0000",
+    });
+
+    const undone = editorReducer(styled, { type: "undo" });
+    expect(undone.elements[0]?.strokeColor).toBe("#18202c");
+
+    const redone = editorReducer(undone, { type: "redo" });
+    expect(redone.elements[0]?.strokeColor).toBe("#ff0000");
+  });
+
+  it("clears future when a new undoable action runs after undo", () => {
+    const first = editorReducer(initialEditorState, {
+      type: "add-element",
+      element: rectangle,
+    });
+    const second = editorReducer(first, {
+      type: "add-element",
+      element: { ...text, id: "text-2" },
+    });
+    const undone = editorReducer(second, { type: "undo" });
+
+    expect(undone.history.future).toHaveLength(1);
+
+    const moved = editorReducer(undone, {
+      type: "update-element",
+      elementId: rectangle.id,
+      x: 200,
+      y: 200,
+    });
+
+    expect(moved.history.future).toEqual([]);
+    expect(moved.elements[0]).toMatchObject({ x: 200, y: 200 });
+  });
+
+  it(`keeps at most ${MAX_HISTORY} snapshots in past`, () => {
+    let state = {
+      ...initialEditorState,
+      elements: [rectangle],
+    };
+
+    for (let index = 0; index < MAX_HISTORY + 3; index += 1) {
+      state = editorReducer(state, {
+        type: "update-element",
+        elementId: rectangle.id,
+        x: 101 + index,
+        y: 80,
+      });
+    }
+
+    expect(state.history.past).toHaveLength(MAX_HISTORY);
+    expect(state.history.past[0]?.[0]).toMatchObject({ x: 103 });
+  });
+
+  it("does nothing on undo when past is empty", () => {
+    const state = {
+      ...initialEditorState,
+      elements: [rectangle],
+    };
+
+    const next = editorReducer(state, { type: "undo" });
+
+    expect(next).toBe(state);
+  });
+
+  it("does not push history for update-element-style with unknown elementId", () => {
+    const state = {
+      ...initialEditorState,
+      elements: [rectangle],
+    };
+
+    const next = editorReducer(state, {
+      type: "update-element-style",
+      elementId: "missing-id",
+      strokeColor: "#ff0000",
+    });
+
+    expect(next).toBe(state);
+    expect(next.history.past).toEqual([]);
   });
 });
