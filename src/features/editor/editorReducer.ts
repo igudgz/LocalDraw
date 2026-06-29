@@ -1,5 +1,6 @@
 import type { EditorAction } from "./editorActions";
 import type { EditorState } from "./editorTypes";
+import { applyElementStylePatch } from "../elements/applyElementStylePatch";
 import {
   estimateTextBounds,
   translateElementTo,
@@ -116,66 +117,15 @@ export function editorReducer(
       }
 
       const updatedAt = new Date().toISOString();
+      const { type: _actionType, elementId: _elementId, ...patch } = action;
 
       return {
         ...state,
-        elements: state.elements.map((element) => {
-          if (element.id !== action.elementId) {
-            return element;
-          }
-
-          if (element.type === "text") {
-            const next = {
-              ...element,
-              ...(action.strokeColor !== undefined
-                ? { strokeColor: action.strokeColor }
-                : {}),
-              ...(action.backgroundColor !== undefined
-                ? { backgroundColor: action.backgroundColor }
-                : {}),
-              ...(action.strokeWidth !== undefined
-                ? { strokeWidth: action.strokeWidth }
-                : {}),
-              ...(action.opacity !== undefined
-                ? { opacity: action.opacity }
-                : {}),
-              ...(action.fontSize !== undefined
-                ? { fontSize: action.fontSize }
-                : {}),
-              ...(action.fontFamily !== undefined
-                ? { fontFamily: action.fontFamily }
-                : {}),
-              updatedAt,
-            };
-
-            if (action.fontSize !== undefined) {
-              const { width, height } = estimateTextBounds(
-                element.text,
-                action.fontSize,
-              );
-              return { ...next, width, height };
-            }
-
-            return next;
-          }
-
-          return {
-            ...element,
-            ...(action.strokeColor !== undefined
-              ? { strokeColor: action.strokeColor }
-              : {}),
-            ...(action.backgroundColor !== undefined
-              ? { backgroundColor: action.backgroundColor }
-              : {}),
-            ...(action.strokeWidth !== undefined
-              ? { strokeWidth: action.strokeWidth }
-              : {}),
-            ...(action.opacity !== undefined
-              ? { opacity: action.opacity }
-              : {}),
-            updatedAt,
-          };
-        }),
+        elements: state.elements.map((element) =>
+          element.id === action.elementId
+            ? applyElementStylePatch(element, patch, updatedAt)
+            : element,
+        ),
         currentDrawing: {
           ...state.currentDrawing,
           updatedAt,

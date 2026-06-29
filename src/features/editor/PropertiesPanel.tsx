@@ -1,6 +1,7 @@
-import { useEditorDispatch, useEditorState } from "./EditorContext";
+import type { ElementStylePatch } from "../elements/applyElementStylePatch";
 import { Input } from "../../shared/ui/Input";
 import { Panel } from "../../shared/ui/Panel";
+import { useEditorDispatch, useEditorState } from "./EditorContext";
 
 const FONT_FAMILIES = [
   {
@@ -26,16 +27,7 @@ export function PropertiesPanel() {
     return null;
   }
 
-  const updateStyle = (
-    fields: Partial<{
-      strokeColor: string;
-      backgroundColor: string;
-      strokeWidth: number;
-      opacity: number;
-      fontSize: number;
-      fontFamily: string;
-    }>,
-  ) => {
+  const updateStyle = (fields: ElementStylePatch) => {
     dispatch({
       type: "update-element-style",
       elementId: element.id,
