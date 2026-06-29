@@ -5,6 +5,12 @@ import {
   estimateTextBounds,
   translateElementTo,
 } from "../elements/elementGeometry";
+import {
+  popFuture,
+  popPast,
+  pushSnapshot,
+} from "../history/historyReducer";
+import { isUndoableAction } from "../history/undoableActions";
 
 export const initialEditorState: EditorState = {
   elements: [],
@@ -39,7 +45,7 @@ export const initialEditorState: EditorState = {
   },
 };
 
-export function editorReducer(
+function applyEditorAction(
   state: EditorState,
   action: EditorAction,
 ): EditorState {
@@ -191,9 +197,65 @@ export function editorReducer(
             : {}),
         },
       };
+    case "undo":
+    case "redo":
+      return state;
     default: {
       const _exhaustive: never = action;
       return state;
+    }
+  }
+}
+
+export function editorReducer(
+  state: EditorState,
+  action: EditorAction,
+): EditorState {
+  switch (action.type) {
+    case "undo": {
+      const { history, restoredElements } = popPast(
+        state.history,
+        state.elements,
+      );
+      if (restoredElements === null) {
+        return state;
+      }
+
+      return {
+        ...state,
+        elements: restoredElements,
+        history,
+      };
+    }
+    case "redo": {
+      const { history, restoredElements } = popFuture(
+        state.history,
+        state.elements,
+      );
+      if (restoredElements === null) {
+        return state;
+      }
+
+      return {
+        ...state,
+        elements: restoredElements,
+        history,
+      };
+    }
+    default: {
+      if (isUndoableAction(action)) {
+        const next = applyEditorAction(state, action);
+        if (next === state) {
+          return state;
+        }
+
+        return {
+          ...next,
+          history: pushSnapshot(state.history, state.elements),
+        };
+      }
+
+      return applyEditorAction(state, action);
     }
   }
 }

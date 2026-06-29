@@ -6,11 +6,13 @@ import {
 } from "./EditorContext";
 import { EditorToolbar } from "./EditorToolbar";
 import { useDrawingImportExport } from "../export/useDrawingImportExport";
+import { useEditorKeyboardShortcuts } from "./useEditorKeyboardShortcuts";
 
 export function Editor() {
   const state = useEditorState();
   const dispatch = useEditorDispatch();
   const { flushSave, projects } = useEditorSession();
+  useEditorKeyboardShortcuts();
 
   const importExport = useDrawingImportExport(state, dispatch, {
     flushSave,
