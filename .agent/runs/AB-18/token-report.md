@@ -22,13 +22,15 @@ None.
 ## Commands executed
 
 * `npm install`
+* `npm run dev -- --port 5176 --strictPort`
 * `npm run build`
 * `npm test`
+* `node .agent/runs/AB-18/smoke-keyboard-shortcuts.mjs`
 * `git fetch origin`
 
 ## Files altered
 
-11 source/spec files + 6 evidence files
+11 source + 15 evidence files (task, dispatches, E2E, dev-server)
 
 ## Token usage
 
