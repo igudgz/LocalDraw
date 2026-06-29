@@ -162,6 +162,28 @@ function applyEditorAction(
           updatedAt: new Date().toISOString(),
         },
       };
+    case "delete-element": {
+      const hadElement = state.elements.some(
+        (element) => element.id === action.elementId,
+      );
+      if (!hadElement) {
+        return state;
+      }
+
+      return {
+        ...state,
+        elements: state.elements.filter(
+          (element) => element.id !== action.elementId,
+        ),
+        selectedElementIds: state.selectedElementIds.filter(
+          (id) => id !== action.elementId,
+        ),
+        currentDrawing: {
+          ...state.currentDrawing,
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    }
     case "restore-drawing":
       return {
         ...state,

@@ -341,3 +341,36 @@ describe("editorReducer undo/redo", () => {
     expect(next.history.past).toEqual([]);
   });
 });
+
+describe("editorReducer delete-element", () => {
+  it("removes the element and clears selection", () => {
+    const state = {
+      ...initialEditorState,
+      elements: [rectangle],
+      selectedElementIds: [rectangle.id],
+    };
+
+    const next = editorReducer(state, {
+      type: "delete-element",
+      elementId: rectangle.id,
+    });
+
+    expect(next.elements).toEqual([]);
+    expect(next.selectedElementIds).toEqual([]);
+  });
+
+  it("undoes delete-element by restoring removed elements", () => {
+    const deleted = editorReducer(
+      {
+        ...initialEditorState,
+        elements: [rectangle],
+        selectedElementIds: [rectangle.id],
+      },
+      { type: "delete-element", elementId: rectangle.id },
+    );
+
+    const undone = editorReducer(deleted, { type: "undo" });
+
+    expect(undone.elements).toEqual([rectangle]);
+  });
+});

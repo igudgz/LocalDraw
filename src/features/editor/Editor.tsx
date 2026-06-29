@@ -1,4 +1,6 @@
 import { EditorCanvas } from "./EditorCanvas";
+import { useState } from "react";
+import type { LocalDrawElement } from "../elements/elementTypes";
 import {
   useEditorDispatch,
   useEditorSession,
@@ -12,7 +14,10 @@ export function Editor() {
   const state = useEditorState();
   const dispatch = useEditorDispatch();
   const { flushSave, projects } = useEditorSession();
-  useEditorKeyboardShortcuts();
+  const [copiedElement, setCopiedElement] = useState<LocalDrawElement | null>(
+    null,
+  );
+  useEditorKeyboardShortcuts({ copiedElement, setCopiedElement });
 
   const importExport = useDrawingImportExport(state, dispatch, {
     flushSave,

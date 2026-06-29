@@ -4,6 +4,7 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
   type Dispatch,
   type ReactNode,
 } from "react";
@@ -19,6 +20,8 @@ type EditorContextValue = {
   flushSave: () => Promise<void>;
   hydrated: boolean;
   projects: ReturnType<typeof useDrawingProjects>;
+  inlineEditActive: boolean;
+  setInlineEditActive: (active: boolean) => void;
 };
 
 const EditorContext = createContext<EditorContextValue | null>(null);
@@ -29,6 +32,7 @@ type EditorProviderProps = {
 
 export function EditorProvider({ children }: EditorProviderProps) {
   const [state, dispatch] = useReducer(editorReducer, initialEditorState);
+  const [inlineEditActive, setInlineEditActive] = useState(false);
   const refreshSummariesRef = useRef<(() => Promise<void>) | null>(null);
 
   const { flushSave, hydrated } = useDrawingPersistence(state, dispatch, {
@@ -41,8 +45,16 @@ export function EditorProvider({ children }: EditorProviderProps) {
   refreshSummariesRef.current = projects.refreshSummaries;
 
   const value = useMemo(
-    () => ({ state, dispatch, flushSave, hydrated, projects }),
-    [state, flushSave, hydrated, projects],
+    () => ({
+      state,
+      dispatch,
+      flushSave,
+      hydrated,
+      projects,
+      inlineEditActive,
+      setInlineEditActive,
+    }),
+    [state, flushSave, hydrated, projects, inlineEditActive],
   );
 
   return (
@@ -72,6 +84,7 @@ export function useEditorElements() {
 }
 
 export function useEditorSession() {
-  const { flushSave, hydrated, projects } = useEditorContext();
-  return { flushSave, hydrated, projects };
+  const { flushSave, hydrated, projects, inlineEditActive, setInlineEditActive } =
+    useEditorContext();
+  return { flushSave, hydrated, projects, inlineEditActive, setInlineEditActive };
 }
