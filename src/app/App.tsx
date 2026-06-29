@@ -4,6 +4,7 @@ import {
   useEditorState,
   useEditorSession,
 } from "../features/editor/EditorContext";
+import { PropertiesPanel } from "../features/editor/PropertiesPanel";
 import { ProjectPanel } from "../features/projects/ProjectPanel";
 import { TechnicalDocPanel } from "../features/technical-doc/TechnicalDocPanel";
 
@@ -25,7 +26,11 @@ function AppShell() {
         onUpdateMetadata={projects.updateDrawingMetadata}
       />
       <Editor />
-      <TechnicalDocPanel />
+      {state.selectedElementIds.length > 0 ? (
+        <PropertiesPanel />
+      ) : (
+        <TechnicalDocPanel />
+      )}
     </main>
   );
 }

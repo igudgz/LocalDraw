@@ -35,6 +35,16 @@ export type EditorAction =
       text: string;
     }
   | {
+      type: "update-element-style";
+      elementId: string;
+      strokeColor?: string;
+      backgroundColor?: string;
+      strokeWidth?: number;
+      opacity?: number;
+      fontSize?: number;
+      fontFamily?: string;
+    }
+  | {
       type: "set-interaction";
       interaction: EditorInteraction;
     }
