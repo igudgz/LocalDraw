@@ -1,15 +1,19 @@
 import { describe, expect, it } from "vitest";
-import type { LocalDrawElement } from "../elements/elementTypes";
+import type { LocalDrawElement, RectangleElement } from "../elements/elementTypes";
 import { estimateTextBounds } from "../elements/elementGeometry";
 import { editorReducer, initialEditorState } from "../editor/editorReducer";
+import {
+  createResizeSession,
+  getResizedElement,
+} from "../tools/resizeTool";
 
-const rectangle: LocalDrawElement = {
+const rectangle: RectangleElement = {
   id: "rect-1",
   type: "rectangle",
-  x: 10,
-  y: 20,
+  x: 100,
+  y: 80,
   width: 120,
-  height: 80,
+  height: 60,
   rotation: 0,
   strokeColor: "#18202c",
   backgroundColor: "#ffffff",
@@ -138,5 +142,72 @@ describe("editorReducer update-element-style", () => {
     });
 
     expect(next).toBe(state);
+  });
+});
+
+describe("editorReducer resize-element (REQ-006, REQ-008)", () => {
+  it("applies resizeElement and keeps the element selected", () => {
+    const session = createResizeSession(1, rectangle.id, "se");
+    const resizedElement = getResizedElement(session, rectangle, {
+      x: 250,
+      y: 180,
+    });
+
+    const next = editorReducer(
+      {
+        ...initialEditorState,
+        elements: [rectangle],
+        selectedElementIds: [rectangle.id],
+      },
+      {
+        type: "resize-element",
+        elementId: rectangle.id,
+        element: resizedElement,
+      },
+    );
+
+    expect(next.selectedElementIds).toEqual([rectangle.id]);
+    expect(next.elements[0]).toMatchObject({
+      id: rectangle.id,
+      x: 100,
+      y: 80,
+      width: 150,
+      height: 100,
+    });
+  });
+
+  it("still supports move after resize", () => {
+    const session = createResizeSession(1, rectangle.id, "se");
+    const resizedElement = getResizedElement(session, rectangle, {
+      x: 250,
+      y: 180,
+    });
+
+    const resized = editorReducer(
+      {
+        ...initialEditorState,
+        elements: [rectangle],
+        selectedElementIds: [rectangle.id],
+      },
+      {
+        type: "resize-element",
+        elementId: rectangle.id,
+        element: resizedElement,
+      },
+    );
+
+    const moved = editorReducer(resized, {
+      type: "update-element",
+      elementId: rectangle.id,
+      x: 120,
+      y: 90,
+    });
+
+    expect(moved.elements[0]).toMatchObject({
+      x: 120,
+      y: 90,
+      width: 150,
+      height: 100,
+    });
   });
 });
