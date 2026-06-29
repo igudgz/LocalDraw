@@ -13,10 +13,10 @@ Memoria persistente do projeto para o fluxo spec-driven (TLC) integrado a orques
 
 ## Handoff
 
-* In-flight feature: AB-12 (Fase 7 resize) em `feat/mvp-batch-005-resize` / worktree LocalDraw-resize
-* Fase atual: Fase 7 — Resize e edicao basica
-* Proximo passo sugerido: AB-13 (estilos, outro worktree) ou AB-14 (undo/redo)
-* Bloqueios: nenhum para AB-12
-* Decisoes pendentes de humano: AB-22 provider LLM (batch techdoc)
+* In-flight feature: AB-13 estilos visuais — PR `feat/mvp-batch-006-styles` → main (merge pos AB-12/PR #8)
+* Fase atual: Fase 8 (estilos visuais); main inclui Fase 7 resize (AB-12)
+* Proximo passo sugerido: AB-14 (Fase 9 undo/redo) ou AB-18 (Fase 13 atalhos)
+* Bloqueios: AB-22 (Fase 17) — aguardando decisao humana sobre provider LLM
+* Decisoes pendentes de humano: Provider LLM; E2E manual pos-merge AB-13
 * Ultima atualizacao: 2026-06-28
-* Batch concluido: mvp-batch-004-persistence (AB-15–17); main inclui mvp-batch-005-techdoc (AB-19–21)
+* Batch concluido: mvp-batch-005-resize (AB-12, PR #8); mvp-batch-006-styles (AB-13) em merge

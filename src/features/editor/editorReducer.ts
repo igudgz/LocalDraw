@@ -1,5 +1,6 @@
 import type { EditorAction } from "./editorActions";
 import type { EditorState } from "./editorTypes";
+import { applyElementStylePatch } from "../elements/applyElementStylePatch";
 import {
   estimateTextBounds,
   translateElementTo,
@@ -114,6 +115,30 @@ export function editorReducer(
           updatedAt: new Date().toISOString(),
         },
       };
+    case "update-element-style": {
+      const target = state.elements.find(
+        (element) => element.id === action.elementId,
+      );
+      if (!target) {
+        return state;
+      }
+
+      const updatedAt = new Date().toISOString();
+      const { type: _actionType, elementId: _elementId, ...patch } = action;
+
+      return {
+        ...state,
+        elements: state.elements.map((element) =>
+          element.id === action.elementId
+            ? applyElementStylePatch(element, patch, updatedAt)
+            : element,
+        ),
+        currentDrawing: {
+          ...state.currentDrawing,
+          updatedAt,
+        },
+      };
+    }
     case "set-interaction":
       return {
         ...state,

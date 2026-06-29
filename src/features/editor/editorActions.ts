@@ -1,3 +1,4 @@
+import type { ElementStylePatch } from "../elements/applyElementStylePatch";
 import type { LocalDrawElement } from "../elements/elementTypes";
 import type {
   EditorInteraction,
@@ -39,6 +40,10 @@ export type EditorAction =
       elementId: string;
       text: string;
     }
+  | ({
+      type: "update-element-style";
+      elementId: string;
+    } & ElementStylePatch)
   | {
       type: "set-interaction";
       interaction: EditorInteraction;

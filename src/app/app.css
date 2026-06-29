@@ -31,7 +31,8 @@ button {
 }
 
 .project-panel,
-.technical-doc-panel {
+.technical-doc-panel,
+.properties-panel {
   display: flex;
   min-height: 0;
   flex-direction: column;
@@ -44,8 +45,52 @@ button {
   border-right: 1px solid #d8dee8;
 }
 
-.technical-doc-panel {
+.technical-doc-panel,
+.properties-panel {
   border-left: 1px solid #d8dee8;
+}
+
+.properties-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.properties-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.properties-color-input {
+  width: 100%;
+  height: 36px;
+  padding: 2px;
+  border: 1px solid #c8d0dc;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.properties-range-input {
+  width: 100%;
+  cursor: pointer;
+}
+
+.properties-number-input,
+.properties-select {
+  width: 100%;
+  border: 1px solid #c8d0dc;
+  border-radius: 6px;
+  color: #18202c;
+  background: #ffffff;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
 }
 
 .panel-heading {
@@ -503,7 +548,8 @@ button {
   }
 
   .project-panel,
-  .technical-doc-panel {
+  .technical-doc-panel,
+  .properties-panel {
     min-height: auto;
     border: 0;
     border-bottom: 1px solid #d8dee8;
